@@ -1,12 +1,12 @@
-effect_id,card_id,side,sequence,activation_type,trigger,target,target_count,target_filter,operation,value,duration,mana_cost,usage_limit,effect_text
-E001,U001,back,1,triggered,on_flip,self,1,,modify_attack,1,permanent,0,,翻面時: 自身攻擊力永久+1。
-E002,U002,back,1,triggered,on_flip,self,1,,modify_max_health,1,permanent,0,,翻面時: 自身最大生命值永久+1。
-E003,U003,back,1,triggered,on_flip,other_ally_unit,1,,modify_attack,1,this_turn_end,0,,翻面時: 指定我方一個其他單位攻擊力+1到本回合結束。
-E004,U004,back,1,triggered,on_flip,other_ally_unit,1,,heal,1,instant,0,,翻面時: 指定我方一個其他單位治療1點現有生命值。
-E005,U005,front,1,triggered,on_enter,self_player,1,,draw,1,instant,0,,登場時: 從我方牌組抽1張牌。
-E006,U005,back,1,triggered,on_flip,self_player,1,,draw,1,instant,0,,翻面時: 從我方牌組抽1張牌。
-E007,U006,back,1,triggered,on_flip,opponent_unit,1,,damage,2,instant,0,,翻面時: 指定對方一個單位造成2點傷害。
-E008,S001,,1,played,on_play,opponent_unit,1,zone:battlefield,damage,2,instant,0,,指定對方戰場上一個單位造成2點傷害。
-E009,S002,,1,played,on_play,ally_unit,1,zone:battlefield;keyword:庇護,modify_max_health,1,permanent,0,,指定1個自己戰場上擁有〖庇護〗的單位，使其最大生命值永久+1。
-E010,A001,,1,activated,manual,ally_unit,1,zone:battlefield,modify_attack,1,permanent,1,once_per_turn,消耗1魔力值: 指定一個自己戰場上的單位，使其攻擊力永久+1。
-E011,R001,,1,response,ally_becomes_attack_target,trigger_target,1,type:unit;controller:self,modify_attack,1,attack_end,0,once_per_response_window,當一個我方單位成為攻擊目標時: 使該單位攻擊力+1直至本次攻擊結束。
+﻿effect_id,card_id,side,sequence,activation_type,trigger,condition,target,target_count,target_filter,target_required,operation,value,parameter,duration,mana_cost,usage_limit_type,usage_limit_count,optional,failure_behavior,effect_text
+E001,U001,back,1,triggered,on_flip,,self,1,,false,modify_attack,1,,permanent,0,,,false,continue,翻面時: 自身攻擊力永久+1。
+E002,U002,back,1,triggered,on_flip,,self,1,,false,modify_max_health,1,,permanent,0,,,false,continue,翻面時: 自身最大生命值永久+1。
+E003,U003,back,1,triggered,on_flip,,other_ally_unit,1,zone:battlefield;controller:self;type:unit;exclude:self,true,modify_attack,1,,until_turn_end,0,,,false,continue,翻面時: 指定我方一個其他單位攻擊力+1到本回合結束。
+E004,U004,back,1,triggered,on_flip,,other_ally_unit,1,zone:battlefield;controller:self;type:unit;exclude:self,true,heal,1,,instant,0,,,false,continue,翻面時: 指定我方一個其他單位治療1點現有生命值。
+E005,U005,front,1,triggered,on_enter,,self_player,1,,false,draw,1,,instant,0,,,false,continue,登場時: 從我方牌組抽1張牌。
+E006,U005,back,1,triggered,on_flip,,self_player,1,,false,draw,1,,instant,0,,,false,continue,翻面時: 從我方牌組抽1張牌。
+E007,U006,back,1,triggered,on_flip,,opponent_unit,1,zone:battlefield;controller:opponent;type:unit,true,damage,2,,instant,0,,,false,continue,翻面時: 指定對方一個單位造成2點傷害。
+E008,S001,none,1,played,on_play,,opponent_unit,1,zone:battlefield;controller:opponent;type:unit,true,damage,2,,instant,0,,,false,continue,指定對方戰場上一個單位造成2點傷害。
+E009,S002,none,1,played,on_play,,ally_unit,1,zone:battlefield;controller:self;type:unit;keyword:庇護,true,modify_max_health,1,,permanent,0,,,false,continue,指定1個自己戰場上擁有〖庇護〗的單位，使其最大生命值永久+1。
+E010,A001,none,1,activated,manual,,ally_unit,1,zone:battlefield;controller:self;type:unit,true,modify_attack,1,,permanent,1,per_turn,1,false,continue,消耗1魔力值: 指定一個自己戰場上的單位，使其攻擊力永久+1。
+E011,R001,none,1,response,ally_becomes_attack_target,,trigger_target,1,controller:self;type:unit,true,modify_attack,1,,until_attack_end,0,per_response_window,1,false,continue,當一個我方單位成為攻擊目標時: 使該單位攻擊力+1直至本次攻擊結束。
