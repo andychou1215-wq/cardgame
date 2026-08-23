@@ -1,9 +1,9 @@
 card_id,side,attack,max_health,keywords,effect_text
 U001,front,1,2,,
-U001,back,2,3,,
+U001,back,1,2,,
 U002,front,2,3,,
-U002,back,4,4,,
+U002,back,2,3,,
 U003,front,2,1,迅擊,
-U003,back,3,2,迅擊,
+U003,back,2,1,迅擊,
 U004,front,1,4,庇護,
-U004,back,2,5,庇護,
+U004,back,1,4,庇護,
