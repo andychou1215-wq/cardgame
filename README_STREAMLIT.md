@@ -1,93 +1,79 @@
-# Streamlit Prototype
+# 卡牌對決 Streamlit Prototype v2
 
-這是一個放入現有 `cardgame` repo 根目錄即可執行的 MVP。
+此版本在第一版 MVP 上加入 **Combat + Transform + effects.csv Resolver**。
 
-## MVP 已支援
+## 已支援
 
-- 從 `data/cards/cards.csv` 載入卡牌主資料
-- 從 `data/cards/unit_sides.csv` 載入 Unit 正反面資料
-- 從 `data/decks/decks.csv` / `deck_cards.csv` 建立牌組
-- 從 `data/factions/leader.csv` 載入 Leader
-- 選擇兩副測試牌組
-- 洗牌與雙方 5 張起手牌
-- Hot-seat 模式
-- 每位玩家回合開始增加 1 最大魔力並回滿
-- 非起始回合抽 1 張
-- Unit 出牌與魔力扣除
-- Battlefield 顯示
+- D001 / D002 牌組載入、洗牌、起手牌與 Hot-seat
+- Leader HP、Mana、手牌、戰場、Artifact 區
+- Unit / Spell / Artifact 出牌
+- 單位攻擊單位或 Leader
+- Response Window（目前可處理 R001 類型）
+- 單位死亡、墓地、`on_leave`
+- Transform 自動判定與 `on_flip`
+- Transform counters：
+  - `attack_count`
+  - `kill_count`
+  - `total_damage_taken`
+  - `turn_count`
+  - `total_damage_dealt`
+  - `heal_count`
+  - `unit_count_at_least`
+  - `leader_health_at_or_below`
+- effects.csv triggers：`on_play`、`on_enter`、`on_flip`、`on_leave`、`manual`、`ally_becomes_attack_target`
+- operations：`damage`、`heal`、`draw`、`modify_attack`、`modify_max_health`、`add_keyword`
+- durations：`instant`、`permanent`、`until_turn_end`、`until_attack_end`、`until_opponent_turn_end`
+- `target_filter` 的 keyword / exclude:self 基本過濾
+- 一回合一次 activated ability
 - Game Log
-- End Turn
 
-## 暫未支援
+## Prototype 假設
 
-- Spell / Artifact / Response 結算
-- `effects.csv` effect resolver
-- 攻擊與死亡
-- Transform 條件與翻面
-- Apocalypse
-- Mulligan
-- 多人連線
+repo 的戰鬥規則目前明確定義：可攻擊敵方單位或玩家、傷害保留、每回合攻擊一次、剛進場不能攻擊。
+但尚未明確寫出單位互打時是否會反擊，因此 v2 暫採「攻擊者與防守單位同時互相造成自身攻擊力的傷害」。此行為集中在 `Game.resolve_combat()`，之後規則確定時可以替換。
+
+`迅擊` 在本 Prototype 暫視為「可在進場回合攻擊」。`庇護` 已能被效果系統辨識與加上，但其完整攻擊限制不在目前 repo 戰鬥規則文字內，因此 v2 不自行推定。
 
 ## 安裝
 
-在 repo 根目錄：
-
-```bash
-python -m venv .venv
-```
-
-Windows PowerShell：
-
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m streamlit run streamlit_app.py
 ```
 
-若 PowerShell 阻擋啟用腳本，也可不啟用環境，直接：
+PowerShell 執行原則造成啟用失敗時：
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
 ```
 
-## 放入 repo 的方式
+## 建議放置位置
 
-壓縮包內的：
-
-```text
-streamlit_app.py
-requirements.txt
-src/
-```
-
-直接合併到 `cardgame/` 根目錄即可。現有 `src/` 可直接合併；此 Prototype 新增：
+將壓縮包內容直接合併到 cardgame repo 根目錄：
 
 ```text
-src/cards/models.py
-src/deck/loader.py
-src/core/game.py
-src/ui/components.py
+cardgame/
+├─ data/
+├─ docs/
+├─ src/
+│  ├─ cards/
+│  ├─ core/
+│  ├─ deck/
+│  ├─ effects/
+│  └─ ui/
+├─ tests/
+├─ streamlit_app.py
+├─ requirements.txt
+└─ README_STREAMLIT.md
 ```
-
-## Prototype 暫定規則
-
-`src/core/game.py` 中有一個暫定值：
-
-```python
-BATTLEFIELD_LIMIT = 5
-```
-
-這只是 UI/MVP 防呆，不代表正式規則。等 repo 的戰場格數規則定案後再同步修改。
 
 ## 下一階段
 
-建議依序加入：
+建議依序補：庇護正式戰鬥規則、Artifact durability、Apocalypse、完整 Response chain、Mulligan、勝負/牌庫耗盡規則，以及 AI vs AI batch simulation。
 
-1. 攻擊與死亡
-2. Transform condition evaluator
-3. `effects.csv` resolver（damage/heal/draw/modify/add_keyword）
-4. Spell / Artifact
-5. Response Window
-6. Apocalypse
-7. Playtest metrics / export log
+## 隨附 effects.csv 修正
+
+目前 repo 的 `unit_sides.csv` 對 U009「大樹守衛」寫的是翻面後同時獲得臨時〖庇護〗與「最大生命值永久 +1」，但目前 `effects.csv` 只有前一段效果。此 Prototype 在 `data/cards/effects.csv` 隨附 E027 作為第二段 `on_flip` effect，讓資料驅動結算與卡面文字一致。

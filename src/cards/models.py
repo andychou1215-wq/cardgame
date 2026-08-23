@@ -13,6 +13,11 @@ class CardDefinition:
     faction_id: str
     effect_text: str = ""
     rarity: str = ""
+    transform_condition_type: str = ""
+    transform_condition_target: str = ""
+    transform_condition_value: int = 0
+    transform_condition_text: str = ""
+    durability: int = 0
 
 
 @dataclass(frozen=True)
@@ -23,6 +28,15 @@ class UnitSideDefinition:
     max_health: int
     keywords: tuple[str, ...] = ()
     effect_text: str = ""
+
+
+@dataclass
+class TimedModifier:
+    kind: str  # attack / max_health / keyword
+    value: int = 0
+    keyword: str = ""
+    duration: str = "instant"
+    source_player_index: int = 0
 
 
 @dataclass
@@ -54,7 +68,22 @@ class UnitInstance(CardInstance):
     current_side: str = "front"
     damage: int = 0
     entered_turn: int = 0
+    owner_index: int = -1
+
+    # Transform counters.
     attacks_made: int = 0
+    kills: int = 0
+    total_damage_taken: int = 0
+    total_damage_dealt: int = 0
+    heal_count: int = 0
+    survived_turns: int = 0
+
+    # Runtime state.
+    attacks_this_turn: int = 0
+    permanent_attack_bonus: int = 0
+    permanent_health_bonus: int = 0
+    permanent_keywords: set[str] = field(default_factory=set)
+    timed_modifiers: list[TimedModifier] = field(default_factory=list)
 
     @property
     def side_definition(self) -> UnitSideDefinition:
@@ -65,11 +94,13 @@ class UnitInstance(CardInstance):
 
     @property
     def attack(self) -> int:
-        return self.side_definition.attack
+        temp = sum(m.value for m in self.timed_modifiers if m.kind == "attack")
+        return max(0, self.side_definition.attack + self.permanent_attack_bonus + temp)
 
     @property
     def max_health(self) -> int:
-        return self.side_definition.max_health
+        temp = sum(m.value for m in self.timed_modifiers if m.kind == "max_health")
+        return max(1, self.side_definition.max_health + self.permanent_health_bonus + temp)
 
     @property
     def current_health(self) -> int:
@@ -77,4 +108,31 @@ class UnitInstance(CardInstance):
 
     @property
     def keywords(self) -> tuple[str, ...]:
-        return self.side_definition.keywords
+        values = set(self.side_definition.keywords) | self.permanent_keywords
+        values.update(m.keyword for m in self.timed_modifiers if m.kind == "keyword" and m.keyword)
+        return tuple(sorted(values))
+
+    @property
+    def is_transformed(self) -> bool:
+        return self.current_side == "back"
+
+    def has_keyword(self, keyword: str) -> bool:
+        return keyword in self.keywords
+
+    def can_attack(self, current_turn: int) -> bool:
+        if self.attacks_this_turn >= 1:
+            return False
+        # Repo rule: newly entered units cannot attack unless a card effect permits it.
+        # Current data uses 迅擊 as that permission in the prototype.
+        return self.entered_turn < current_turn or self.has_keyword("迅擊")
+
+    def heal(self, amount: int) -> int:
+        before = self.current_health
+        self.damage = max(0, self.damage - max(0, amount))
+        return self.current_health - before
+
+    def take_damage(self, amount: int) -> int:
+        dealt = max(0, amount)
+        self.damage += dealt
+        self.total_damage_taken += dealt
+        return dealt
