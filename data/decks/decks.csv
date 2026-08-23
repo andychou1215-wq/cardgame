@@ -1,3 +1,3 @@
-deck_id,name,faction_id,leader_id,deck_type,description
-D001,F001測試牌組,F001,L001,test,第一套基準測試牌組
-D002,F002測試牌組,F002,L002,test,桑德霍爾德部族測試牌組
+deck_id,name,faction_id,leader_id,deck_type,version,description
+D001,F001測試牌組,F001,L001,test,0.1,第一套基準測試牌組
+D002,F002測試牌組,F002,L002,test,0.1,桑德霍爾德部族測試牌組
