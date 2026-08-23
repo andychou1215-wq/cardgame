@@ -35,8 +35,8 @@ def reset_game(deck1: str, deck2: str) -> None:
     st.session_state.pop("flash", None)
 
 
-st.title("🃏 卡牌對決 — Streamlit Prototype v3")
-st.caption("Mulligan + 正式〖庇護〗攻擊限制 + Combat + Transform + effects.csv Resolver。")
+st.title("🃏 卡牌對決 — Streamlit Prototype v4")
+st.caption("Mulligan + 〖庇護〗/〖吸血〗/〖格檔〗 + Combat + Transform + 完整生命值模型 + effects.csv Resolver。")
 
 try:
     data = load_data()
@@ -121,6 +121,10 @@ with st.expander("Prototype 規則假設 / 已知限制"):
 - 依 repo 規則：單位每回合最多攻擊 1 次，剛進場不能攻擊；Prototype 將 `迅擊` 視為可忽略進場限制。
 - 依 repo 正式規則：單位攻擊單位時，雙方同時造成戰鬥傷害並可反擊。
 - 〖庇護〗：只要防守方場上存在至少一個〖庇護〗單位，敵方 Unit 的合法攻擊目標就只剩〖庇護〗單位；不可攻擊 Leader 或其他非〖庇護〗單位。
+- 〖吸血〗：透過主動攻擊實際造成傷害後，攻擊單位回復等量現有生命；反擊不會觸發〖吸血〗。
+- 〖格檔〗：Prototype 正式定義為每次受到戰鬥傷害時減少 1 點（最低 0）；不減少卡牌效果造成的傷害。
+- 生命值模型：現有生命與最大生命分離；「最大生命值 +X」不再視為治療，只有 `heal` 才會恢復現有生命。
+- 死亡／觸發時序：同批致死單位先同時離場，再依主動玩家 → 非主動玩家順序排入 `on_leave`，之後才繼續效果與 Transform 檢查。
 - Mulligan：雙方各抽 5 張起手牌；每位玩家可一次選擇任意張退回牌組，洗牌後抽回等量；雙方完成後隨機決定先手並開始第一回合。
 - Apocalypse 系統不納入本遊戲與此 Prototype。
 - Artifact durability 尚未消耗；目前先支援 Artifact 進場與 activated effect。

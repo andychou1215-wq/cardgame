@@ -75,6 +75,7 @@ class Game:
         self.pending_combat: PendingCombat | None = None
         self.usage_counts: dict[tuple[str, str, int, int], int] = {}
         self.winner_index: int | None = None
+        self._processing_effects = False
         self.mulligan_done = [False, False]
         self.mulligan_player_index = 0
         self.game_started = False
@@ -345,7 +346,26 @@ class Game:
                 QueuedEffect(effect, card.instance_id, defending_index, trigger_target=combat.defender),
                 combat.defender,
             )
+        self._handle_deaths()
+        self.process_effect_queue()
         return True, "Response 已使用。"
+
+    def _combat_damage_to_unit(self, target: UnitInstance, raw_amount: int) -> tuple[int, int]:
+        """Return (actual damage, blocked damage). 〖格檔〗 only reduces combat damage by 1."""
+        blocked = 1 if target.has_keyword("格檔") and raw_amount > 0 else 0
+        actual = target.take_damage(max(0, raw_amount - blocked))
+        return actual, blocked
+
+    def _apply_lifesteal(self, attacker: UnitInstance, damage_dealt: int) -> int:
+        """Repo rule: 〖吸血〗 heals the attacking unit for damage dealt by its active attack."""
+        if damage_dealt <= 0 or not attacker.has_keyword("吸血"):
+            return 0
+        healed = attacker.heal(damage_dealt)
+        if healed > 0:
+            self.log(f"〖吸血〗：{attacker.card_id} {attacker.name} 回復 {healed} 點生命。")
+        else:
+            self.log(f"〖吸血〗：{attacker.card_id} {attacker.name} 已滿生命，未回復生命。")
+        return healed
 
     def resolve_combat(self) -> tuple[bool, str]:
         combat = self.pending_combat
@@ -360,54 +380,64 @@ class Game:
         attacker.attacks_made += 1
 
         if defender.kind == "leader":
-            amount = attacker.attack
-            self.players[defender.player_index].leader_health = max(0, self.players[defender.player_index].leader_health - amount)
+            amount = min(attacker.attack, self.players[defender.player_index].leader_health)
+            self.players[defender.player_index].leader_health -= amount
             attacker.total_damage_dealt += amount
-            self.log(f"{attacker.card_id} 對 {self.players[defender.player_index].leader.name} 造成 {amount} 點傷害。")
+            self.log(f"{attacker.card_id} 對 {self.players[defender.player_index].leader.name} 造成 {amount} 點戰鬥傷害。")
+            self._apply_lifesteal(attacker, amount)
         else:
             target = self.find_unit(defender.instance_id)
             if target is None:
                 self.pending_combat = None
                 return False, "防守單位已離場，戰鬥取消。"
-            # Prototype assumption: unit combat deals damage simultaneously in both directions.
-            attack_damage = attacker.attack
-            counter_damage = target.attack
-            target.take_damage(attack_damage)
-            attacker.take_damage(counter_damage)
-            attacker.total_damage_dealt += attack_damage
-            target.total_damage_dealt += counter_damage
-            self.log(f"{attacker.card_id} ↔ {target.card_id}：造成 {attack_damage} / {counter_damage} 點戰鬥傷害。")
-            target_dead = target.current_health <= 0
-            attacker_dead = attacker.current_health <= 0
-            if target_dead:
-                attacker.kills += 1
-            if attacker_dead:
-                target.kills += 1
-            self._handle_deaths()
 
+            # Snapshot combat stats before simultaneous damage.
+            attacker_raw = attacker.attack
+            defender_raw = target.attack
+            dealt_to_target, blocked_by_target = self._combat_damage_to_unit(target, attacker_raw)
+            dealt_to_attacker, blocked_by_attacker = self._combat_damage_to_unit(attacker, defender_raw)
+            attacker.total_damage_dealt += dealt_to_target
+            target.total_damage_dealt += dealt_to_attacker
+
+            detail = f"{attacker.card_id} ↔ {target.card_id}：造成 {dealt_to_target} / {dealt_to_attacker} 點戰鬥傷害。"
+            self.log(detail)
+            if blocked_by_target:
+                self.log(f"〖格檔〗：{target.card_id} 減少 {blocked_by_target} 點戰鬥傷害。")
+            if blocked_by_attacker:
+                self.log(f"〖格檔〗：{attacker.card_id} 減少 {blocked_by_attacker} 點反擊傷害。")
+
+            # 〖吸血〗 only belongs to the unit making the active attack; counterattack does not trigger it.
+            self._apply_lifesteal(attacker, dealt_to_target)
+
+            if target.current_health <= 0:
+                attacker.kills += 1
+            if attacker.current_health <= 0:
+                target.kills += 1
+
+        # State-based deaths are collected simultaneously, then on_leave triggers are queued.
+        self._handle_deaths()
         self._expire_modifiers("until_attack_end")
         self.pending_combat = None
-        self._check_winner()
-        self.check_transforms()
         self.process_effect_queue()
+        self._check_winner()
         return True, "戰鬥結算完成。"
 
     # ---------- Transform ----------
-    def check_transforms(self) -> None:
-        changed = True
-        guard = 0
-        while changed and guard < 20:
-            changed = False
-            guard += 1
-            for pidx, player in enumerate(self.players):
-                for unit in list(player.battlefield):
-                    if unit.current_side != "front" or unit.back is None:
-                        continue
-                    if self._transform_condition_met(unit, pidx):
-                        self._transform(unit, pidx)
-                        changed = True
-            if self.pending_choice:
-                break
+    def check_transforms(self) -> bool:
+        changed = False
+        # Active player first, then non-active player, matching trigger ordering.
+        order = [self.active_player_index, 1 - self.active_player_index]
+        for pidx in order:
+            player = self.players[pidx]
+            for unit in list(player.battlefield):
+                if unit.current_side != "front" or unit.back is None:
+                    continue
+                if self._transform_condition_met(unit, pidx):
+                    self._transform(unit, pidx)
+                    changed = True
+        if changed and not self._processing_effects:
+            self.process_effect_queue()
+        return changed
 
     def _transform_condition_met(self, unit: UnitInstance, owner_index: int) -> bool:
         d = unit.definition
@@ -435,17 +465,22 @@ class Game:
 
     def _transform(self, unit: UnitInstance, owner_index: int) -> None:
         unit.current_side = "back"
+        unit.clamp_health()
         self.log(f"{unit.card_id} {unit.name} 達成翻面條件，翻至反面。")
-        self.enqueue_trigger(unit, "on_flip", owner_index=owner_index)
+        self._queue_trigger(unit, "on_flip", owner_index=owner_index)
 
     # ---------- Effects ----------
-    def enqueue_trigger(self, source: CardInstance, trigger: str, owner_index: int | None = None, trigger_target: TargetRef | None = None) -> None:
+    def _queue_trigger(self, source: CardInstance, trigger: str, owner_index: int | None = None, trigger_target: TargetRef | None = None) -> None:
         if owner_index is None:
             owner_index = self.owner_of_card(source.instance_id)
         side = source.current_side if isinstance(source, UnitInstance) else "none"
         for effect in self.data.effects_for(source.card_id, trigger, side):
             self.effect_queue.append(QueuedEffect(effect, source.instance_id, owner_index, trigger_target))
-        self.process_effect_queue()
+
+    def enqueue_trigger(self, source: CardInstance, trigger: str, owner_index: int | None = None, trigger_target: TargetRef | None = None) -> None:
+        self._queue_trigger(source, trigger, owner_index, trigger_target)
+        if not self._processing_effects:
+            self.process_effect_queue()
 
     def _enqueue_card_effects(self, card: CardInstance, trigger: str, selected_target: TargetRef | None = None) -> None:
         owner = self.active_player_index
@@ -459,33 +494,48 @@ class Game:
                 self.effect_queue.append(q)
 
     def process_effect_queue(self) -> None:
-        if self.pending_choice:
+        if self.pending_choice or self._processing_effects:
             return
-        guard = 0
-        while self.effect_queue and not self.pending_choice and guard < 100:
-            guard += 1
-            queued = self.effect_queue.pop(0)
-            effect = queued.effect
-            candidates = self._candidate_targets(effect, queued.source_id, queued.source_player_index, queued.trigger_target)
-            if effect.target in {"all_ally_units", "all_other_ally_units"}:
-                self._resolve_effect(queued, None)
-                continue
-            if effect.target_required:
-                if not candidates:
-                    self.log(f"{effect.effect_id} 沒有合法目標。")
-                    if effect.failure_behavior == "stop":
-                        self.effect_queue.clear()
+        self._processing_effects = True
+        try:
+            guard = 0
+            while guard < 200 and not self.pending_choice:
+                guard += 1
+                if self.effect_queue:
+                    queued = self.effect_queue.pop(0)
+                    effect = queued.effect
+                    candidates = self._candidate_targets(effect, queued.source_id, queued.source_player_index, queued.trigger_target)
+                    if effect.target in {"all_ally_units", "all_other_ally_units"}:
+                        self._resolve_effect(queued, None)
+                        self._handle_deaths()
+                        continue
+                    if effect.target_required:
+                        if not candidates:
+                            self.log(f"{effect.effect_id} 沒有合法目標。")
+                            if effect.failure_behavior == "stop":
+                                self.effect_queue.clear()
+                            continue
+                        if len(candidates) == 1:
+                            self._resolve_effect(queued, candidates[0])
+                            self._handle_deaths()
+                        else:
+                            self.pending_choice = PendingChoice(queued, candidates, effect.effect_text or "選擇效果目標")
+                            break
+                    else:
+                        target = candidates[0] if len(candidates) == 1 else None
+                        self._resolve_effect(queued, target)
+                        self._handle_deaths()
                     continue
-                if len(candidates) == 1:
-                    self._resolve_effect(queued, candidates[0])
-                else:
-                    self.pending_choice = PendingChoice(queued, candidates, effect.effect_text or "選擇效果目標")
-                    return
-            else:
-                target = candidates[0] if len(candidates) == 1 else None
-                self._resolve_effect(queued, target)
-        self._handle_deaths()
-        self._check_winner()
+
+                # No queued effects: resolve state-based deaths, then transforms.
+                if self._handle_deaths():
+                    continue
+                if self.check_transforms():
+                    continue
+                break
+            self._check_winner()
+        finally:
+            self._processing_effects = False
 
     def resolve_pending_choice(self, target: TargetRef) -> tuple[bool, str]:
         pending = self.pending_choice
@@ -495,8 +545,8 @@ class Game:
             return False, "選擇的目標不合法。"
         self.pending_choice = None
         self._resolve_effect(pending.queued, target)
+        self._handle_deaths()
         self.process_effect_queue()
-        self.check_transforms()
         return True, "效果目標已選擇並完成結算。"
 
     def _resolve_effect(self, queued: QueuedEffect, selected_target: TargetRef | None) -> None:
@@ -545,9 +595,12 @@ class Game:
                     if kind == "attack":
                         target.permanent_attack_bonus += effect.value
                     else:
-                        target.permanent_health_bonus += effect.value
+                        target.increase_max_health(effect.value)
                 else:
-                    target.timed_modifiers.append(TimedModifier(kind, effect.value, duration=effect.duration, source_player_index=queued.source_player_index))
+                    if kind == "max_health":
+                        target.add_timed_max_health(effect.value, effect.duration, queued.source_player_index)
+                    else:
+                        target.timed_modifiers.append(TimedModifier(kind, effect.value, duration=effect.duration, source_player_index=queued.source_player_index))
                 self.log(f"{effect.effect_id}: {target.card_id} {kind} {effect.value:+d} ({effect.duration})。")
             elif effect.operation == "add_keyword":
                 target = self.find_unit(ref.instance_id)
@@ -560,9 +613,6 @@ class Game:
                 self.log(f"{effect.effect_id}: {target.card_id} 獲得〖{effect.parameter}〗 ({effect.duration})。")
             else:
                 self.log(f"⚠ {effect.effect_id}: 尚未支援 operation={effect.operation}")
-        self._handle_deaths()
-        self._check_winner()
-        self.check_transforms()
 
     def _targets_for_resolution(self, effect: EffectDefinition, source_id: str, source_player_index: int, trigger_target: TargetRef | None, selected: TargetRef | None) -> list[TargetRef]:
         if selected is not None:
@@ -604,6 +654,10 @@ class Game:
             keyword = filters.get("keyword")
             if keyword and not u.has_keyword(keyword):
                 continue
+            # Healing a full-health unit is not a legal target; this prevents no-op heals
+            # and makes heal_count track successful healing events only.
+            if effect.operation == "heal" and u.current_health >= u.max_health:
+                continue
             refs.append(TargetRef("unit", u.owner_index, u.instance_id))
         return refs
 
@@ -617,20 +671,29 @@ class Game:
         return result
 
     # ---------- Death / expiration / winner ----------
-    def _handle_deaths(self) -> None:
+    def _handle_deaths(self) -> bool:
+        """Move all lethal units simultaneously, then queue on_leave in AP/NAP order."""
         deaths: list[tuple[int, UnitInstance]] = []
-        for pidx, player in enumerate(self.players):
-            for unit in list(player.battlefield):
+        order = [self.active_player_index, 1 - self.active_player_index]
+        for pidx in order:
+            for unit in list(self.players[pidx].battlefield):
                 if unit.current_health <= 0:
                     deaths.append((pidx, unit))
+        if not deaths:
+            return False
+
+        # First move every dead unit out of battlefield so all simultaneous deaths see the same state.
         for pidx, unit in deaths:
             player = self.players[pidx]
-            if unit not in player.battlefield:
-                continue
-            player.battlefield.remove(unit)
-            self.log(f"{unit.card_id} {unit.name} 生命值歸零，離開戰場。")
-            self.enqueue_trigger(unit, "on_leave", owner_index=pidx)
-            player.graveyard.append(unit)
+            if unit in player.battlefield:
+                player.battlefield.remove(unit)
+                player.graveyard.append(unit)
+                self.log(f"{unit.card_id} {unit.name} 生命值歸零，離開戰場。")
+
+        # Then queue all leave triggers in active-player/non-active-player order.
+        for pidx, unit in deaths:
+            self._queue_trigger(unit, "on_leave", owner_index=pidx)
+        return True
 
     def _expire_modifiers(self, duration: str, ending_player_index: int | None = None) -> None:
         for pidx, player in enumerate(self.players):
@@ -643,6 +706,7 @@ class Game:
                     if not expire:
                         kept.append(m)
                 unit.timed_modifiers = kept
+                unit.clamp_health()
 
     def _check_winner(self) -> None:
         dead = [i for i, p in enumerate(self.players) if p.leader_health <= 0]

@@ -66,7 +66,6 @@ class UnitInstance(CardInstance):
     front: UnitSideDefinition | None = None
     back: UnitSideDefinition | None = None
     current_side: str = "front"
-    damage: int = 0
     entered_turn: int = 0
     owner_index: int = -1
 
@@ -84,6 +83,11 @@ class UnitInstance(CardInstance):
     permanent_health_bonus: int = 0
     permanent_keywords: set[str] = field(default_factory=set)
     timed_modifiers: list[TimedModifier] = field(default_factory=list)
+    health: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.health is None:
+            self.health = self.max_health
 
     @property
     def side_definition(self) -> UnitSideDefinition:
@@ -104,7 +108,7 @@ class UnitInstance(CardInstance):
 
     @property
     def current_health(self) -> int:
-        return max(0, self.max_health - self.damage)
+        return max(0, min(self.health or 0, self.max_health))
 
     @property
     def keywords(self) -> tuple[str, ...]:
@@ -122,17 +126,33 @@ class UnitInstance(CardInstance):
     def can_attack(self, current_turn: int) -> bool:
         if self.attacks_this_turn >= 1:
             return False
-        # Repo rule: newly entered units cannot attack unless a card effect permits it.
-        # Current data uses 迅擊 as that permission in the prototype.
         return self.entered_turn < current_turn or self.has_keyword("迅擊")
 
+    def clamp_health(self) -> None:
+        if self.health is None:
+            self.health = self.max_health
+        self.health = max(0, min(self.health, self.max_health))
+
     def heal(self, amount: int) -> int:
+        self.clamp_health()
         before = self.current_health
-        self.damage = max(0, self.damage - max(0, amount))
+        self.health = min(self.max_health, self.current_health + max(0, amount))
         return self.current_health - before
 
     def take_damage(self, amount: int) -> int:
-        dealt = max(0, amount)
-        self.damage += dealt
+        self.clamp_health()
+        dealt = min(self.current_health, max(0, amount))
+        self.health = max(0, self.current_health - dealt)
         self.total_damage_taken += dealt
         return dealt
+
+    def increase_max_health(self, amount: int) -> None:
+        """Increase max-health capacity without restoring current health."""
+        self.permanent_health_bonus += amount
+        self.clamp_health()
+
+    def add_timed_max_health(self, amount: int, duration: str, source_player_index: int) -> None:
+        self.timed_modifiers.append(
+            TimedModifier("max_health", amount, duration=duration, source_player_index=source_player_index)
+        )
+        self.clamp_health()
