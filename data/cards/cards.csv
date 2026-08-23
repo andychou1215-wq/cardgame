@@ -1,11 +1,11 @@
-id,name,type,cost,faction_id,effect_text,rarity,transform_condition_type,transform_condition_target,transform_condition_value,transform_condition_text
-U001,哥布林,unit,1,NEUTRAL,,R,attack_count,self,1,此單位累計完成1次主動攻擊後翻至反面。
-U002,帝國騎士,unit,2,F001,,R,attack_count,self,2,此單位累計完成2次主動攻擊後翻至反面。
-U003,游擊小隊,unit,2,F001,,R,kill_count,self,1,此單位累計完成1次造成對方單位死亡後翻至反面。
-U004,帝國盾衛,unit,3,F001,,R,damage_taken,self,2,此單位累計受到2點傷害後翻至反面。
-U005,報童,unit,1,NEUTRAL,,R,turn_count,self,1,此單位累計在戰場存活1回合後後翻至反面。
-U006,飛龍,unit,4,NEUTRAL,,SR,total_damage_dealt,self,8,此單位累計造成8點傷害後翻至反面。
-S001,全力一擊,spell,2,NEUTRAL,指定對方戰場上一個單位造成2點傷害。,R,,,,
-S002,神聖防禦,spell,3,F001,指定1個自己戰場上擁有【庇護】的單位，使其最大生命值永久+1。,R,,,,
-A001,石中劍,artifact,3,NEUTRAL,消耗1魔力值: 指定一個自己戰場上的單位，使其攻擊力永久+1。,R,,,,
-R001,反擊風暴,response,2,NEUTRAL,當一個我方單位成為攻擊目標時: 使該單位攻擊力+1直至本次攻擊結束。,R,,,,
+id,name,type,cost,faction_id,effect_text,rarity,transform_condition_type,transform_condition_target,transform_condition_value,transform_condition_text,durability
+U001,哥布林,unit,1,NEUTRAL,,R,attack_count,self,1,此單位累計完成1次主動攻擊後翻至反面。,
+U002,帝國騎士,unit,2,F001,,R,attack_count,self,2,此單位累計完成2次主動攻擊後翻至反面。,
+U003,游擊小隊,unit,2,F001,,R,kill_count,self,1,此單位累計完成1次造成對方單位死亡後翻至反面。,
+U004,帝國盾衛,unit,3,F001,,R,damage_taken,self,2,此單位累計受到2點傷害後翻至反面。,
+U005,報童,unit,1,NEUTRAL,,R,turn_count,self,1,此單位累計在戰場存活1回合後後翻至反面。,
+U006,飛龍,unit,4,NEUTRAL,,SR,total_damage_dealt,self,8,此單位累計造成8點傷害後翻至反面。,
+S001,全力一擊,spell,2,NEUTRAL,指定對方戰場上一個單位造成2點傷害。,R,,,,,
+S002,神聖防禦,spell,3,F001,指定1個自己戰場上擁有【庇護】的單位，使其最大生命值永久+1。,R,,,,,
+A001,石中劍,artifact,3,NEUTRAL,消耗1魔力值: 指定一個自己戰場上的單位，使其攻擊力永久+1。,R,,,,3
+R001,反擊風暴,response,2,NEUTRAL,當一個我方單位成為攻擊目標時: 使該單位攻擊力+1直至本次攻擊結束。,R,,,,,
