@@ -1,0 +1,5 @@
+id,name,type,cost,faction_id,effect_text,rairty,transform_condition_type,transform_condition_target,transform_condition_value,transform_condition_text
+U001,哥布林,unit,1,NEUTRAL,,R,attack_count,self,1,此單位累計完成1次主動攻擊後翻至反面。
+U002,帝國騎士,unit,2,F001,,R,attack_count,self,2,此單位累計完成2次主動攻擊後翻至反面。
+U003,游擊小隊,unit,2,F001,,R,kill_count,self,1,此單位累計完成1次造成對方單位死亡後翻至反面。
+U004,帝國盾衛,unit,3,F001,,R,damage_taken,self,2,此單位累計受到2點傷害後翻至反面。
