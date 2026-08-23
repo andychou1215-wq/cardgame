@@ -212,3 +212,32 @@ def sidebar(game: Game) -> None:
         st.divider()
         for line in reversed(game.log_entries[-40:]):
             st.write(line)
+
+
+def mulligan_panel(game: Game) -> None:
+    """Hot-seat Mulligan: each player may replace any number of opening cards once."""
+    pidx = game.mulligan_player_index
+    player = game.players[pidx]
+    st.info(
+        f"Mulligan — {player.name}: 可選擇任意張起手牌退回牌組，洗牌後抽回等量。每位玩家僅一次。"
+    )
+    st.caption("Hot-seat：請只讓目前玩家查看此區域，完成後將裝置交給下一位玩家。")
+    choices = st.multiselect(
+        "選擇要更換的卡（可不選，直接保留全部）",
+        options=player.hand,
+        format_func=lambda c: f"{c.card_id} {c.name} · {c.card_type} · Cost {c.cost}",
+        key=f"mulligan_choices_{pidx}",
+    )
+    cols = st.columns(min(5, max(1, len(player.hand))))
+    for i, card in enumerate(player.hand):
+        with cols[i % len(cols)]:
+            st.markdown(card_html(card), unsafe_allow_html=True)
+    if st.button(
+        f"確認 {player.name} Mulligan（更換 {len(choices)} 張）",
+        type="primary",
+        use_container_width=True,
+        key=f"confirm_mulligan_{pidx}",
+    ):
+        ok, message = game.mulligan_hand([c.instance_id for c in choices])
+        st.session_state["flash"] = ("success" if ok else "error", message)
+        st.rerun()

@@ -11,6 +11,7 @@ from src.ui.components import (
     battlefield,
     combat_controls,
     hand,
+    mulligan_panel,
     inject_css,
     pending_effect_choice,
     player_header,
@@ -34,8 +35,8 @@ def reset_game(deck1: str, deck2: str) -> None:
     st.session_state.pop("flash", None)
 
 
-st.title("🃏 卡牌對決 — Streamlit Prototype v2")
-st.caption("Combat + Transform + effects.csv Resolver：攻擊、Response Window、翻面、Spell/Artifact、Triggered/Activated effects。")
+st.title("🃏 卡牌對決 — Streamlit Prototype v3")
+st.caption("Mulligan + 正式〖庇護〗攻擊限制 + Combat + Transform + effects.csv Resolver。")
 
 try:
     data = load_data()
@@ -80,6 +81,10 @@ if flash:
 if game.winner_index is not None:
     st.success(f"🏆 {game.players[game.winner_index].name} 獲勝！")
 
+if not game.game_started:
+    mulligan_panel(game)
+    st.stop()
+
 # Opponent view.
 player_header(game.inactive_player, opponent=True)
 battlefield(game.inactive_player, "opponent", game)
@@ -114,8 +119,10 @@ with st.expander("Prototype 規則假設 / 已知限制"):
     st.markdown(
         """
 - 依 repo 規則：單位每回合最多攻擊 1 次，剛進場不能攻擊；Prototype 將 `迅擊` 視為可忽略進場限制。
-- repo 尚未明確定義「單位攻擊單位」的傷害方向；v2 暫採 **雙方同時以攻擊力互相造成傷害**，方便 Playtest，之後可在 Combat 模組替換。
-- `庇護` 目前能被 effect filter 辨識與賦予，但其完整戰鬥規則尚未在此版推定實作。
+- 依 repo 正式規則：單位攻擊單位時，雙方同時造成戰鬥傷害並可反擊。
+- 〖庇護〗：只要防守方場上存在至少一個〖庇護〗單位，敵方 Unit 的合法攻擊目標就只剩〖庇護〗單位；不可攻擊 Leader 或其他非〖庇護〗單位。
+- Mulligan：雙方各抽 5 張起手牌；每位玩家可一次選擇任意張退回牌組，洗牌後抽回等量；雙方完成後隨機決定先手並開始第一回合。
+- Apocalypse 系統不納入本遊戲與此 Prototype。
 - Artifact durability 尚未消耗；目前先支援 Artifact 進場與 activated effect。
 - `until_turn_end`、`until_attack_end`、`until_opponent_turn_end` 已支援效果到期。
         """

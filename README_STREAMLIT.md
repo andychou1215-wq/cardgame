@@ -1,40 +1,27 @@
-# 卡牌對決 Streamlit Prototype v2
+# 卡牌對決 Streamlit Prototype v3
 
-此版本在第一版 MVP 上加入 **Combat + Transform + effects.csv Resolver**。
+本版本加入 Mulligan、正式〖庇護〗攻擊限制，並保留 Combat、Transform、effects.csv Resolver。
+現有遊戲不使用 Apocalypse 系統，因此 Prototype 不包含任何 Apocalypse 流程或入口。
 
 ## 已支援
 
-- D001 / D002 牌組載入、洗牌、起手牌與 Hot-seat
-- Leader HP、Mana、手牌、戰場、Artifact 區
-- Unit / Spell / Artifact 出牌
-- 單位攻擊單位或 Leader
-- Response Window（目前可處理 R001 類型）
-- 單位死亡、墓地、`on_leave`
-- Transform 自動判定與 `on_flip`
-- Transform counters：
-  - `attack_count`
-  - `kill_count`
-  - `total_damage_taken`
-  - `turn_count`
-  - `total_damage_dealt`
-  - `heal_count`
-  - `unit_count_at_least`
-  - `leader_health_at_or_below`
-- effects.csv triggers：`on_play`、`on_enter`、`on_flip`、`on_leave`、`manual`、`ally_becomes_attack_target`
-- operations：`damage`、`heal`、`draw`、`modify_attack`、`modify_max_health`、`add_keyword`
-- durations：`instant`、`permanent`、`until_turn_end`、`until_attack_end`、`until_opponent_turn_end`
-- `target_filter` 的 keyword / exclude:self 基本過濾
-- 一回合一次 activated ability
+- 兩副牌組載入與 Hot-seat 1v1
+- 起手 5 張
+- Mulligan：每位玩家一次，可更換任意張；退回牌組、洗牌、抽回等量
+- 雙方 Mulligan 完成後隨機決定先手
+- Mana 成長與回合開始抽牌
+- Unit / Spell / Artifact / Response
+- Unit 攻擊 Unit 或 Leader
+- 單位互戰時雙方同時造成傷害與反擊
+- 〖庇護〗：防守方存在〖庇護〗單位時，敵方 Unit 只能攻擊〖庇護〗單位
+- Response Window
+- Unit 死亡、墓地、on_leave
+- Transform 條件與 on_flip
+- effects.csv Resolver
+- duration：instant / permanent / until_turn_end / until_attack_end / until_opponent_turn_end
 - Game Log
 
-## Prototype 假設
-
-repo 的戰鬥規則目前明確定義：可攻擊敵方單位或玩家、傷害保留、每回合攻擊一次、剛進場不能攻擊。
-但尚未明確寫出單位互打時是否會反擊，因此 v2 暫採「攻擊者與防守單位同時互相造成自身攻擊力的傷害」。此行為集中在 `Game.resolve_combat()`，之後規則確定時可以替換。
-
-`迅擊` 在本 Prototype 暫視為「可在進場回合攻擊」。`庇護` 已能被效果系統辨識與加上，但其完整攻擊限制不在目前 repo 戰鬥規則文字內，因此 v2 不自行推定。
-
-## 安裝
+## 執行
 
 ```powershell
 python -m venv .venv
@@ -43,37 +30,44 @@ pip install -r requirements.txt
 python -m streamlit run streamlit_app.py
 ```
 
-PowerShell 執行原則造成啟用失敗時：
+若 PowerShell 不允許啟用虛擬環境：
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
 ```
 
-## 建議放置位置
+## Mulligan 規則（Prototype v3）
 
-將壓縮包內容直接合併到 cardgame repo 根目錄：
+1. 雙方各抽 5 張起手牌。
+2. Player 1 先進行 Mulligan，之後 Player 2。
+3. 每位玩家可以選擇 0～5 張起手牌更換。
+4. 被選中的牌退回牌組並重新洗牌。
+5. 玩家抽回相同數量的牌，維持 5 張起手牌。
+6. 每位玩家僅有一次 Mulligan 機會。
+7. 雙方完成 Mulligan 後，系統隨機決定先手，第一回合正式開始。
 
-```text
-cardgame/
-├─ data/
-├─ docs/
-├─ src/
-│  ├─ cards/
-│  ├─ core/
-│  ├─ deck/
-│  ├─ effects/
-│  └─ ui/
-├─ tests/
-├─ streamlit_app.py
-├─ requirements.txt
-└─ README_STREAMLIT.md
+## 〖庇護〗規則
+
+只要防守方戰場上存在至少一個具有〖庇護〗的 Unit：
+
+- 攻擊方 Unit 只能選擇具有〖庇護〗的敵方 Unit 作為攻擊目標。
+- 敵方 Leader 不再是合法攻擊目標。
+- 非〖庇護〗敵方 Unit 不再是合法攻擊目標。
+- 若有多個〖庇護〗Unit，攻擊方可自由選擇其中一個。
+- 當防守方戰場上不再存在〖庇護〗Unit 時，攻擊目標恢復為一般規則。
+
+## 測試
+
+```powershell
+python -m pytest -q
 ```
 
-## 下一階段
+目前回歸測試涵蓋：
 
-建議依序補：庇護正式戰鬥規則、Artifact durability、Apocalypse、完整 Response chain、Mulligan、勝負/牌庫耗盡規則，以及 AI vs AI batch simulation。
-
-## 隨附 effects.csv 修正
-
-目前 repo 的 `unit_sides.csv` 對 U009「大樹守衛」寫的是翻面後同時獲得臨時〖庇護〗與「最大生命值永久 +1」，但目前 `effects.csv` 只有前一段效果。此 Prototype 在 `data/cards/effects.csv` 隨附 E027 作為第二段 `on_flip` effect，讓資料驅動結算與卡面文字一致。
+- 基本 Game 初始化
+- Combat + Transform + on_flip effect
+- Spell targeting/effect resolver
+- Mulligan
+- Mulligan 完成前禁止一般遊戲操作
+- 〖庇護〗合法攻擊目標限制

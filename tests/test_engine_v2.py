@@ -45,6 +45,9 @@ def test_combat_transform_and_effect(tmp_path: Path):
     make_repo(tmp_path)
     data = GameData(tmp_path)
     game = Game(data, "D001", "D002", seed=1)
+    game.mulligan_hand([])
+    game.mulligan_hand([])
+    game.active_player_index = 0
 
     # Put deterministic units directly on board to isolate the engine mechanics.
     p1 = game.players[0]
@@ -72,6 +75,9 @@ def test_spell_effect_targeting(tmp_path: Path):
     make_repo(tmp_path)
     data = GameData(tmp_path)
     game = Game(data, "D001", "D002", seed=2)
+    game.mulligan_hand([])
+    game.mulligan_hand([])
+    game.active_player_index = 0
     p1, p2 = game.players
     target = next(c for c in data.build_deck("D002") if c.card_id == "U002")
     target.owner_index = 1

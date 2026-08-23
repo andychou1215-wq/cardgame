@@ -75,6 +75,9 @@ class Game:
         self.pending_combat: PendingCombat | None = None
         self.usage_counts: dict[tuple[str, str, int, int], int] = {}
         self.winner_index: int | None = None
+        self.mulligan_done = [False, False]
+        self.mulligan_player_index = 0
+        self.game_started = False
         self.players = [
             self._make_player("Player 1", deck1_id, 0),
             self._make_player("Player 2", deck2_id, 1),
@@ -99,13 +102,42 @@ class Game:
 
     @property
     def is_blocked(self) -> bool:
-        return self.pending_choice is not None or self.pending_combat is not None or self.winner_index is not None
+        return (not self.game_started) or self.pending_choice is not None or self.pending_combat is not None or self.winner_index is not None
 
     def _start_game(self) -> None:
         for player in self.players:
             player.draw(STARTING_HAND)
-        self._start_turn(initial=True)
-        self.log("遊戲開始。雙方各抽 5 張起手牌。")
+        self.log("雙方各抽 5 張起手牌，進入 Mulligan 階段。")
+
+    def mulligan_hand(self, selected_instance_ids: list[str]) -> tuple[bool, str]:
+        if self.game_started:
+            return False, "Mulligan 階段已結束。"
+        pidx = self.mulligan_player_index
+        if self.mulligan_done[pidx]:
+            return False, "此玩家已完成 Mulligan。"
+        player = self.players[pidx]
+        selected = set(selected_instance_ids)
+        invalid = selected - {c.instance_id for c in player.hand}
+        if invalid:
+            return False, "Mulligan 選擇包含不在起手牌中的卡。"
+
+        returned = [c for c in player.hand if c.instance_id in selected]
+        player.hand = [c for c in player.hand if c.instance_id not in selected]
+        player.deck.extend(returned)
+        self.rng.shuffle(player.deck)
+        drawn = player.draw(len(returned))
+        self.mulligan_done[pidx] = True
+        self.log(f"{player.name} 完成 Mulligan：更換 {len(returned)} 張，抽回 {drawn} 張。")
+
+        if all(self.mulligan_done):
+            self.active_player_index = self.rng.randrange(2)
+            self.game_started = True
+            self._start_turn(initial=True)
+            self.log(f"Mulligan 完成；隨機決定 {self.active_player.name} 為先手。")
+            return True, "雙方 Mulligan 完成，對局正式開始。"
+
+        self.mulligan_player_index = 1 - pidx
+        return True, f"{player.name} Mulligan 完成，請交給下一位玩家。"
 
     def _start_turn(self, initial: bool = False) -> None:
         player = self.active_player
@@ -135,6 +167,8 @@ class Game:
         return []
 
     def play_card(self, hand_index: int, target: TargetRef | None = None) -> tuple[bool, str]:
+        if not self.game_started:
+            return False, "請先完成雙方 Mulligan。"
         if self.pending_choice or self.pending_combat:
             return False, "請先完成目前等待中的效果或戰鬥結算。"
         player = self.active_player
@@ -213,6 +247,8 @@ class Game:
         return self._candidate_targets(effect, card.instance_id, self.active_player_index, None)
 
     def activate(self, source_id: str, effect_id: str, target: TargetRef | None = None) -> tuple[bool, str]:
+        if not self.game_started:
+            return False, "請先完成雙方 Mulligan。"
         if self.pending_choice or self.pending_combat:
             return False, "請先完成目前等待中的效果或戰鬥結算。"
         source = self.find_card_in_play(source_id)
@@ -239,11 +275,19 @@ class Game:
 
     # ---------- Combat ----------
     def legal_attackers(self) -> list[UnitInstance]:
+        if not self.game_started:
+            return []
         return [u for u in self.active_player.battlefield if u.can_attack(self.turn_number)]
 
     def legal_attack_targets(self) -> list[TargetRef]:
+        if not self.game_started:
+            return []
         opponent_index = 1 - self.active_player_index
-        targets = [TargetRef("unit", opponent_index, u.instance_id) for u in self.inactive_player.battlefield]
+        opponent_units = list(self.inactive_player.battlefield)
+        sheltered = [u for u in opponent_units if u.has_keyword("庇護")]
+        if sheltered:
+            return [TargetRef("unit", opponent_index, u.instance_id) for u in sheltered]
+        targets = [TargetRef("unit", opponent_index, u.instance_id) for u in opponent_units]
         targets.append(TargetRef("leader", opponent_index))
         return targets
 
@@ -607,6 +651,8 @@ class Game:
             self.log(f"遊戲結束：{self.players[self.winner_index].name} 獲勝。")
 
     def end_turn(self) -> tuple[bool, str]:
+        if not self.game_started:
+            return False, "請先完成雙方 Mulligan。"
         if self.pending_choice or self.pending_combat:
             return False, "請先完成目前等待中的效果或戰鬥。"
         if self.winner_index is not None:
