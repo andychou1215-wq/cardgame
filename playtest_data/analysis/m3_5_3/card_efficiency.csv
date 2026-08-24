@@ -4,9 +4,9 @@ D001,F001測試牌組,U002,帝國騎士,unit,F001,R,3,2,2,3,2.5,2,3,0,0,0,attack
 D001,F001測試牌組,U003,游擊小隊,unit,F001,R,3,2,2,1,1.5,2,1,0,0,0,kill_count,1,迅擊,1,modify_attack,on_flip
 D001,F001測試牌組,U004,帝國盾衛,unit,F001,R,2,3,1,4,1.667,1,4,0,0,0,total_damage_taken,1,庇護,1,heal,on_flip
 D001,F001測試牌組,U006,飛龍,unit,NEUTRAL,SR,2,4,3,5,2.0,3,5,0,0,0,total_damage_dealt,0,,1,damage,on_flip
-D001,F001測試牌組,U011,遺跡石像,unit,NEUTRAL,SR,2,7,4,8,1.714,4,8,0,0,0,total_damage_taken,1,庇護,1,add_keyword,on_flip
+D001,F001測試牌組,U011,遺跡石像,unit,NEUTRAL,SR,2,7,4,7,1.571,4,7,0,0,0,total_damage_taken,1,庇護,1,add_keyword,on_flip
 D001,F001測試牌組,U012,騎士團長,unit,F001,SR,2,6,3,6,1.5,3,6,0,0,0,unit_count_at_least,0,,4,modify_attack|modify_max_health,on_enter|on_flip
-D001,F001測試牌組,S002,神聖防禦,spell,F001,R,3,3,,,,,,,,,,0,,1,modify_max_health,on_play
+D001,F001測試牌組,S002,神聖防禦,spell,F001,R,3,4,,,,,,,,,,0,,1,modify_max_health,on_play
 D001,F001測試牌組,A001,石中劍,artifact,NEUTRAL,R,2,3,,,,,,,,,,0,,1,modify_attack,manual
 D001,F001測試牌組,R001,反擊風暴,response,NEUTRAL,R,3,2,,,,,,,,,,0,,1,modify_attack,ally_becomes_attack_target
 D002,F002測試牌組,U005,報童,unit,NEUTRAL,R,3,1,1,1,2.0,1,1,0,0,0,turn_count,0,,2,draw,on_enter|on_flip

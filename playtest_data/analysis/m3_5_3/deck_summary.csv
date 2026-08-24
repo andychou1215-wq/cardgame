@@ -1,3 +1,3 @@
 ﻿deck_id,deck_name,faction_id,total_cards,unique_cards,avg_cost,units,spells,artifacts,responses,other_cards,transformable_units,avg_unit_front_stats_per_mana,avg_effects_per_card,avg_keywords_per_card
-D001,F001測試牌組,F001,25,10,3.04,17,3,2,3,0,17,2.045,1.24,0.28
+D001,F001測試牌組,F001,25,10,3.16,17,3,2,3,0,17,2.028,1.24,0.28
 D002,F002測試牌組,F002,25,10,2.8,15,5,2,3,0,15,2.087,1.48,0.12
