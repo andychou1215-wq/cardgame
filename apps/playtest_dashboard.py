@@ -5,6 +5,7 @@ import streamlit as st
 
 from src.playtest.analytics import PlaytestAnalytics, load_playtest_directory
 from src.ui.playtest_dashboard import render_cross_game_dashboard
+from src.ui.advanced_playtest_panel import render_m2_4_dashboard
 
 
 st.set_page_config(page_title="Card Game Playtest Dashboard", page_icon="📈", layout="wide")
@@ -39,3 +40,8 @@ else:
         pd.concat(event_frames, ignore_index=True) if event_frames else pd.DataFrame(),
     )
     render_cross_game_dashboard(analytics)
+
+try:
+    render_m2_4_dashboard(analytics)
+except NameError:
+    pass

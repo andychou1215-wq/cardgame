@@ -10,6 +10,8 @@ from src.core.events import TriggerEvent, TriggerQueue
 from src.core.state_based import StateBasedCheck
 from src.core.priority import PriorityWindow
 from src.core.stack import StackItem, validate_target_ref
+from src.core.stack_manager import StackManager
+from src.core.stack_target import StackTargetRef
 from src.core.response_rules import response_triggers_for_window
 from src.playtest.telemetry import PlaytestRecorder
 
@@ -462,6 +464,7 @@ class Game:
 
         trigger = getattr(effects[0], "trigger", "priority") if effects else "priority"
         stack_item = StackItem(
+            stack_item_id=f"stk-{self.turn_number}-{len(window.stack)+1}-{card.instance_id}",
             source_id=card.instance_id,
             card_id=card.card_id,
             controller_index=player_index,
@@ -526,6 +529,19 @@ class Game:
         if window is None:
             return
         for item in window.drain_lifo():
+            if item.status == "cancelled":
+                self.log(f"Response {item.card_id} 已被取消，不進行結算。")
+                if hasattr(self, "telemetry"):
+                    self.telemetry.record(
+                        "response_cancelled",
+                        turn=self.turn_number,
+                        active_player=self.active_player_index,
+                        player_index=item.controller_index,
+                        card_id=item.card_id,
+                        source_id=item.source_id,
+                        metadata={"stack_item_id": item.stack_item_id, "reason": item.result_reason},
+                    )
+                continue
             validation=validate_target_ref(self,item.trigger_target)
             if not validation.valid:
                 item.mark_fizzled(validation.reason)
@@ -543,6 +559,26 @@ class Game:
                 break
         if hasattr(self,"_run_state_based_check") and self.winner_index is None:
             self._run_state_based_check()
+
+    def pending_stack_items(self):
+        window = self.priority_window
+        return [] if window is None else StackManager(window).pending_items()
+
+    def cancel_stack_item(self, stack_item_id: str, *, reason: str = "countered"):
+        window = self.priority_window
+        if window is None:
+            return False, "目前沒有 Priority Window。"
+        ok = StackManager(window).cancel(stack_item_id, reason)
+        if not ok:
+            return False, "找不到可取消的 Stack Item。"
+        if hasattr(self, "telemetry"):
+            self.telemetry.record(
+                "stack_item_cancelled",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                metadata={"stack_item_id": stack_item_id, "reason": reason},
+            )
+        return True, "Stack Item 已取消。"
 
     def priority_player_index(self) -> int | None:
         if self.priority_window is None or not self.priority_window.is_open:
