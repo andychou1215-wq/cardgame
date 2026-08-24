@@ -1,0 +1,25 @@
+Apply these two small changes to src/playtest/mana_curve.py.
+
+1) Add near the imports:
+
+from src.playtest.schema import normalize_card_deck_inputs
+
+2) At the beginning of BOTH build_deck_curve(...) and build_static_summary(...), add:
+
+    cards, deck_cards = normalize_card_deck_inputs(cards, deck_cards)
+
+Then keep the rest of those functions using the internal schema:
+
+    cards.card_id
+    deck_cards.card_id
+    deck_cards.quantity
+
+Do not keep a second local _normalize_card_schema helper after this cleanup.
+Do not support the old deck_cards.count alias; current project schema is quantity.
+
+Expected analysis output contract remains:
+
+    deck_id, cost, copies, share
+
+Important: pandas GroupBy.cumcount() must remain cumcount(); it is an API method,
+not a schema field and must never be renamed to cumquantity().
