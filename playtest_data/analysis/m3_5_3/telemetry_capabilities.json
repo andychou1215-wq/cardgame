@@ -1,0 +1,12 @@
+{
+  "available": true,
+  "reason": "",
+  "capabilities": {
+    "event_type": true,
+    "card_id": true,
+    "game_id": true,
+    "player_index": true,
+    "turn": true,
+    "winner_join": true
+  }
+}
