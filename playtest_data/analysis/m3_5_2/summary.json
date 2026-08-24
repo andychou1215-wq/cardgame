@@ -1,0 +1,25 @@
+{
+  "overall": {
+    "games": 800,
+    "finished": 800,
+    "finish_rate": 1.0,
+    "p1_wins": 408,
+    "p2_wins": 392,
+    "p1_win_rate": 0.51,
+    "p1_ci_low": 0.47539438365048886,
+    "p1_ci_high": 0.5445100388253975,
+    "avg_turns": 12.48375,
+    "avg_actions": 153.52,
+    "invalid_legal_action": 0,
+    "stalled": 0,
+    "action_limit": 0
+  },
+  "heuristic_head_to_head": {
+    "games": 400,
+    "heuristic_wins": 194,
+    "random_wins": 206,
+    "heuristic_win_rate": 0.485,
+    "ci_low": 0.4363989291617392,
+    "ci_high": 0.5338864396682897
+  }
+}
