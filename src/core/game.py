@@ -159,11 +159,66 @@ class Game:
         player.max_mana = min(MAX_MANA, player.max_mana + 1)
         player.mana = player.max_mana
         if not initial:
-            drawn = player.draw(1)
+            drawn = self._draw_cards(self.active_player_index, 1, reason="turn_start")
             self.log(f"{player.name} 回合開始，回復至 {player.mana}/{player.max_mana} 魔力並抽 {drawn} 張牌。")
+            if self.winner_index is not None:
+                return
         else:
             self.log(f"{player.name} 先手，魔力 {player.mana}/{player.max_mana}。")
         self.check_transforms()
+
+    def _draw_cards(
+        self,
+        player_index: int,
+        count: int = 1,
+        *,
+        reason: str = "effect",
+    ) -> int:
+        if count <= 0 or self.winner_index is not None:
+            return 0
+        player = self.players[player_index]
+        drawn = 0
+        for _ in range(count):
+            if not player.deck:
+                self._declare_deck_out_loss(player_index, reason=reason)
+                break
+            player.hand.append(player.deck.pop())
+            drawn += 1
+        if drawn > 0 and hasattr(self, "telemetry"):
+            self.telemetry.record(
+                "draw",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=player_index,
+                amount=drawn,
+                metadata={"reason": reason},
+            )
+        return drawn
+
+    def _declare_deck_out_loss(self, player_index: int, *, reason: str) -> None:
+        if self.winner_index is not None:
+            return
+        loser = self.players[player_index]
+        winner_index = 1 - player_index
+        winner = self.players[winner_index]
+        self.winner_index = winner_index
+        self.log(f"{loser.name} 需要抽牌，但牌組已無牌可抽，因牌庫耗盡而敗北。")
+        self.log(f"遊戲結束：{winner.name} 獲勝。")
+        if hasattr(self, "telemetry"):
+            self.telemetry.record(
+                "deck_out",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=player_index,
+                metadata={"reason": reason, "winner_index": winner_index},
+            )
+            self.telemetry.record(
+                "game_end",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=winner_index,
+                metadata={"winner_index": winner_index, "reason": "deck_out", "loser_index": player_index},
+            )
 
     # ---------- Card play ----------
     def legal_play_targets(self, hand_index: int) -> list[TargetRef]:
@@ -762,8 +817,10 @@ class Game:
             return
         for ref in refs:
             if effect.operation == "draw":
-                n = self.players[ref.player_index].draw(effect.value)
+                n = self._draw_cards(ref.player_index, effect.value, reason=f"effect:{effect.effect_id}")
                 self.log(f"{effect.effect_id}: {self.players[ref.player_index].name} 抽 {n} 張牌。")
+                if self.winner_index is not None:
+                    return
             elif effect.operation == "heal":
                 if ref.kind == "leader":
                     p = self.players[ref.player_index]
@@ -944,6 +1001,8 @@ class Game:
                 unit.clamp_health()
 
     def _check_winner(self) -> None:
+        if self.winner_index is not None:
+            return
         dead = [i for i, p in enumerate(self.players) if p.leader_health <= 0]
         if dead:
             self.winner_index = 1 - dead[0]
