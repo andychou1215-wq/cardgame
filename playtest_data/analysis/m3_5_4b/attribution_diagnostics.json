@@ -1,0 +1,25 @@
+{
+  "game_player_deck_map": {
+    "rows_examined": 0,
+    "rows_with_game_id": 0,
+    "rows_with_deck_pair": 0,
+    "conflicts": [],
+    "supported": false
+  },
+  "attribution": {
+    "counts": {
+      "total_card_events": 153645,
+      "unique_membership_inferred": 143719,
+      "game_player_attributed": 0,
+      "shared_unattributed": 9926,
+      "unknown_card": 0
+    },
+    "capabilities": {
+      "event_type": true,
+      "card_id": true,
+      "game_id": true,
+      "player_index": true,
+      "game_player_deck_map": false
+    }
+  }
+}

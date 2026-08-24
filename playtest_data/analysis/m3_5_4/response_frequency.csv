@@ -1,0 +1,3 @@
+﻿deck_id,card_id,name,type,cost,quantity,front_stats_per_mana,keywords,operations,triggers,draw_events,play_events,play_given_draw_rate,avg_play_turn,games_played,win_rate_when_played,deck_baseline_win_rate,win_rate_delta_vs_deck,usage_confidence,outlier_score,response_events,transform_events,effect_damage_events,heal_events
+D001,R001,反擊風暴,response,2,3,,,modify_attack,ally_becomes_attack_target,3882,3022,0.7785,9.292,1022,0.7935,0.8975,-0.104,1.0,-0.092482,3022,0,0,0
+D002,R001,反擊風暴,response,2,3,,,modify_attack,ally_becomes_attack_target,3882,3022,0.7785,9.292,1022,0.7935,0.1025,0.691,1.0,0.614472,3022,0,0,0

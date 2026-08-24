@@ -7,6 +7,17 @@
     "game_id": true,
     "player_index": true,
     "turn": true,
-    "winner_join": true
+    "winner_join": true,
+    "initial_hand_event": false,
+    "mulligan_acquisition_event": false,
+    "recorded_draw_is_complete_hand_acquisition": false
+  },
+  "metric_semantics": {
+    "normal_play_events": "card_played",
+    "response_play_events": "response_played",
+    "use_events": "normal_play_events + response_play_events",
+    "recorded_draw_events": "explicit card_drawn only",
+    "uses_per_recorded_draw": "diagnostic ratio, not probability; may exceed 1 when initial-hand/Mulligan acquisitions are not logged",
+    "uses_per_recorded_acquisition": "use_events divided by all acquisition event types currently present in telemetry"
   }
 }

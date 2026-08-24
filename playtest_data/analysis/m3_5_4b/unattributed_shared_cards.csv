@@ -1,0 +1,2 @@
+﻿card_id,candidate_decks,events,event_types,reason
+R001,D001|D002,9926,card_drawn:3882|response_played:3022|response_resolved:3022,shared card requires game_id + player_index -> deck mapping
