@@ -9,6 +9,8 @@ from src.effects.models import EffectDefinition, TargetRef
 from src.core.events import TriggerEvent, TriggerQueue
 from src.core.state_based import StateBasedCheck
 from src.core.priority import PriorityWindow
+from src.core.stack import StackItem, validate_target_ref
+from src.core.response_rules import response_triggers_for_window
 from src.playtest.telemetry import PlaytestRecorder
 
 
@@ -182,8 +184,20 @@ class Game:
             if not player.deck:
                 self._declare_deck_out_loss(player_index, reason=reason)
                 break
-            player.hand.append(player.deck.pop())
+            drawn_card = player.deck.pop()
+            player.hand.append(drawn_card)
             drawn += 1
+            if hasattr(self, "telemetry"):
+                self.telemetry.record(
+                    "card_drawn",
+                    turn=self.turn_number,
+                    active_player=self.active_player_index,
+                    player_index=player_index,
+                    card_id=drawn_card.card_id,
+                    source_id=drawn_card.instance_id,
+                    amount=1,
+                    metadata={"reason": reason},
+                )
         if drawn > 0 and hasattr(self, "telemetry"):
             self.telemetry.record(
                 "draw",
@@ -391,26 +405,32 @@ class Game:
         self.telemetry.record("attack_declared", turn=self.turn_number, active_player=self.active_player_index, player_index=self.active_player_index, card_id=attacker.card_id, source_id=attacker.instance_id, target=defender)
         return True, "已進入 Response Window。"
 
-    def available_responses(self, player_index: int | None = None) -> list[tuple[int, CardInstance, EffectDefinition]]:
-        combat = self.pending_combat
-        window = self.priority_window
+    def available_responses(self, player_index: int | None = None):
+        combat=self.pending_combat
+        window=self.priority_window
         if combat is None or window is None or not window.is_open:
             return []
-
         if player_index is None:
-            player_index = window.current_player_index
+            player_index=window.current_player_index
         if player_index != window.current_player_index:
             return []
-
-        player = self.players[player_index]
-        result = []
-        for idx, card in enumerate(player.hand):
-            effects = self.data.response_effects_for(card.card_id, "ally_becomes_attack_target")
-            if not effects or player.mana < card.cost:
+        player=self.players[player_index]
+        result=[]
+        seen=set()
+        for idx,card in enumerate(player.hand):
+            if player.mana < card.cost:
                 continue
-            if combat.defender.kind == "unit" and combat.defender.player_index == player_index:
+            for trigger in response_triggers_for_window(window.reason):
+                effects=self.data.response_effects_for(card.card_id, trigger)
+                if not effects:
+                    continue
+                if trigger=="ally_becomes_attack_target":
+                    if not (combat.defender.kind=="unit" and combat.defender.player_index==player_index):
+                        continue
                 for effect in effects:
-                    result.append((idx, card, effect))
+                    key=(idx,getattr(effect,"effect_id",id(effect)))
+                    if key not in seen:
+                        seen.add(key); result.append((idx,card,effect))
         return result
 
     def play_response(self, hand_index: int, player_index: int | None = None) -> tuple[bool, str]:
@@ -440,11 +460,16 @@ class Game:
         player.hand.pop(hand_index)
         player.graveyard.append(card)
 
-        bundle = [
-            QueuedEffect(effect, card.instance_id, player_index, trigger_target=combat.defender)
-            for effect in effects
-        ]
-        window.add_response(player_index, bundle)
+        trigger = getattr(effects[0], "trigger", "priority") if effects else "priority"
+        stack_item = StackItem(
+            source_id=card.instance_id,
+            card_id=card.card_id,
+            controller_index=player_index,
+            effects=list(effects),
+            trigger=trigger,
+            trigger_target=combat.defender,
+        )
+        window.add_response(player_index, stack_item)
 
         self.log(
             f"{player.name} 使用 Response {card.card_id} {card.name}；"
@@ -497,20 +522,27 @@ class Game:
         return True, "雙方已 Pass，Response Stack 結算完成，可進入戰鬥結算。"
 
     def _resolve_response_stack(self) -> None:
-        window = self.priority_window
+        window=self.priority_window
         if window is None:
             return
-
-        for bundle in window.drain_lifo():
-            self.effect_queue.extend(bundle)
-
-        if self.effect_queue:
+        for item in window.drain_lifo():
+            validation=validate_target_ref(self,item.trigger_target)
+            if not validation.valid:
+                item.mark_fizzled(validation.reason)
+                self.log(f"Response {item.card_id} 結算失敗（fizzle）：{validation.reason}。")
+                if hasattr(self,"telemetry"):
+                    self.telemetry.record("response_fizzled",turn=self.turn_number,active_player=self.active_player_index,player_index=item.controller_index,card_id=item.card_id,source_id=item.source_id,target=item.trigger_target,metadata={"reason":validation.reason,"trigger":item.trigger})
+                continue
+            for effect in item.effects:
+                self.effect_queue.append(QueuedEffect(effect,item.source_id,item.controller_index,trigger_target=item.trigger_target))
             self.process_effect_queue()
-
-        if hasattr(self, "_run_state_based_check"):
+            item.mark_resolved()
+            if hasattr(self,"telemetry"):
+                self.telemetry.record("response_resolved",turn=self.turn_number,active_player=self.active_player_index,player_index=item.controller_index,card_id=item.card_id,source_id=item.source_id,target=item.trigger_target,metadata={"trigger":item.trigger})
+            if self.winner_index is not None:
+                break
+        if hasattr(self,"_run_state_based_check") and self.winner_index is None:
             self._run_state_based_check()
-        else:
-            self._handle_deaths()
 
     def priority_player_index(self) -> int | None:
         if self.priority_window is None or not self.priority_window.is_open:
