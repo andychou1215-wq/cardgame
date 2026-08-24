@@ -237,6 +237,29 @@ class Game:
             )
 
     # ---------- Card play ----------
+    def can_play_card(self, hand_index: int) -> tuple[bool, str]:
+        if not self.game_started:
+            return False, "請先完成雙方 Mulligan。"
+        if self.pending_choice or self.pending_combat:
+            return False, "請先完成目前等待中的效果或戰鬥結算。"
+        player = self.active_player
+        if hand_index < 0 or hand_index >= len(player.hand):
+            return False, "無效的手牌索引。"
+        card = player.hand[hand_index]
+        if card.cost > player.mana:
+            return False, "魔力不足。"
+        if card.card_type == "response":
+            return False, "Response 只能在對應的 Response Window 使用。"
+        if card.card_type == "unit" and len(player.battlefield) >= BATTLEFIELD_LIMIT:
+            return False, f"戰場已滿（Prototype 暫定 {BATTLEFIELD_LIMIT} 格）。"
+        effects = self.data.effects_for(card.card_id, "on_play", "none")
+        for effect in effects:
+            if effect.target_required and not self._candidate_targets(
+                effect, card.instance_id, self.active_player_index, None
+            ):
+                return False, "沒有合法目標，無法打出此卡。"
+        return True, "可打出。"
+
     def legal_play_targets(self, hand_index: int) -> list[TargetRef]:
         player = self.active_player
         if hand_index < 0 or hand_index >= len(player.hand):
@@ -1067,6 +1090,14 @@ class Game:
                         kept.append(m)
                 unit.timed_modifiers = kept
                 unit.clamp_health()
+
+    def legal_actions(self, player_index: int | None = None):
+        from src.ai.legal_actions import legal_actions
+        return legal_actions(self, player_index)
+
+    def execute_action(self, action):
+        from src.ai.executor import execute_action
+        return execute_action(self, action)
 
     def _check_winner(self) -> None:
         if self.winner_index is not None:
