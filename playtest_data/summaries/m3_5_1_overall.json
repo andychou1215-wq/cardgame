@@ -1,0 +1,13 @@
+{
+  "games": 80,
+  "finished": 80,
+  "finish_rate": 1.0,
+  "p1_wins": 37,
+  "p2_wins": 43,
+  "p1_win_rate": 0.4625,
+  "avg_turns": 12.55,
+  "avg_actions": 156.6375,
+  "stalled": 0,
+  "invalid_legal_action": 0,
+  "action_limit": 0
+}

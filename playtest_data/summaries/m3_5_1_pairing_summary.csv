@@ -1,0 +1,5 @@
+﻿pairing,games,finished,p1_win_rate,avg_turns,avg_actions,invalid_legal_action,stalled,action_limit
+heuristic_vs_heuristic,20,20,0.4,12.75,158.5,0,0,0
+heuristic_vs_random,20,20,0.5,12.2,158.7,0,0,0
+random_vs_heuristic,20,20,0.5,12.55,153.7,0,0,0
+random_vs_random,20,20,0.45,12.7,155.65,0,0,0
