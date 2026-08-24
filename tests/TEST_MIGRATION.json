@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-08-24T12:06:38.508427",
+  "phase": "Repo Cleanup v1",
+  "safe_now": [
+    "remove __pycache__ / .pytest_cache",
+    "add/update .gitignore",
+    "move app entry points under apps/",
+    "keep root compatibility launchers",
+    "move README_STREAMLIT.md under docs/ui-ux/",
+    "archive apply*.py scripts",
+    "create architecture/playtesting/playtest_data/test category directories"
+  ],
+  "deferred_test_migration": {
+    "reason": "historical tests import fixtures from other test_engine_vN modules",
+    "target": {
+      "test_engine_smoke.py": "tests/integration/test_game_smoke.py",
+      "test_engine_v2.py": "split: combat/effects + fixtures",
+      "test_engine_v3.py": "split: turn/transform + fixtures",
+      "test_engine_v4.py": "tests/unit/test_keywords.py",
+      "test_engine_v5.py": "tests/unit/test_health_and_keywords.py",
+      "test_playtest_scenarios.py": "tests/scenarios/test_core_scenarios.py",
+      "test_priority_window.py": "tests/unit/test_priority.py",
+      "test_priority_compatibility.py": "tests/integration/test_priority_compatibility.py",
+      "test_deck_out.py": "tests/unit/test_deck_out.py"
+    }
+  }
+}
