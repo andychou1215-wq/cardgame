@@ -95,3 +95,23 @@
 - 將目前完整專案狀態定義為 v0.1.0。
 - 建立目前核心規則、卡牌資料、戰鬥系統與 Prototype 基準。
 - `cards.csv`、`unit_sides.csv`、`effects.csv` 等現有資料皆以此版本作為後續 Balance Patch 比較基準。
+
+## v0.1.1
+
+### 卡牌平衡
+- S002「神聖防禦」費用：3 → 4。
+- U011「遺跡石像」正反面生命值：8 → 7。
+- A002「世界樹」啟動能力魔力消耗：2 → 1。
+- U013「聖獸」翻面治療領袖：3 → 4。
+
+### 驗證
+- 完整測試套件：86 passed。
+- 完成 800 場 mirrored post-patch simulation。
+- 所有對局正常完成，invalid / stalled / limit 均為 0。
+- Card attribution conservation 驗證通過，unknown_card = 0、conflicts = 0。
+
+### 平衡調查結果
+- D001 勝率：約 89.75% → 89.25%。
+- D002 勝率：約 10.25% → 10.75%。
+- Balance Patch v1 未造成過度修正，但 deck-level 差距仍然明顯。
+- 後續將優先分析 Mana Curve、Stat Efficiency、Tempo、Transform Efficiency 與 AI-by-Deck 表現。
