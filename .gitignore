@@ -17,3 +17,7 @@ repo_cleanup_v1_1_report.json
 # Generated playtest telemetry
 playtest_data/analysis/m3_7_1/m371_event_log.csv
 playtest_data/analysis/m3_7_3/m373_event_log.csv
+
+# Generated playtest artifacts
+playtest_data/replays/*.json
+playtest_data/analysis/**/m*_event_log.csv
