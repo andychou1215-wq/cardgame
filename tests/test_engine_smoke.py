@@ -13,7 +13,7 @@ def test_unit_stats_and_explicit_health():
     assert unit.current_health == 3
 
 
-def test_max_health_increase_does_not_heal():
+def test_max_health_increase_heals_same_amount():
     definition = CardDefinition("U998", "Test", "unit", 1, "NEUTRAL")
     front = UnitSideDefinition("U998", "front", 2, 3)
     unit = UnitInstance(definition=definition, front=front)
@@ -21,4 +21,4 @@ def test_max_health_increase_does_not_heal():
     assert unit.current_health == 1
     unit.increase_max_health(2)
     assert unit.max_health == 5
-    assert unit.current_health == 1
+    assert unit.current_health == 3

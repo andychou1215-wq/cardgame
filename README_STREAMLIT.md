@@ -1,4 +1,4 @@
-# 卡牌對決 Streamlit Prototype v4
+# 卡牌對決 Streamlit Prototype v5
 
 本版本加入 Mulligan、正式〖庇護〗攻擊限制，並保留 Combat、Transform、effects.csv Resolver。
 現有遊戲不使用 Apocalypse 系統，因此 Prototype 不包含任何 Apocalypse 流程或入口。
@@ -37,7 +37,7 @@ python -m streamlit run streamlit_app.py
 .\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
 ```
 
-## Mulligan 規則（Prototype v4）
+## Mulligan 規則（Prototype v5）
 
 1. 雙方各抽 5 張起手牌。
 2. Player 1 先進行 Mulligan，之後 Player 2。
@@ -73,7 +73,7 @@ python -m pytest -q
 - 〖庇護〗合法攻擊目標限制
 
 
-## v4：吸血、格檔、生命值與死亡時序
+## v5：吸血、格檔、生命值與死亡時序
 
 ### 〖吸血〗
 依目前 repo 的正式定義：單位透過**主動攻擊**實際造成傷害時，回復自身等量現有生命。
@@ -84,7 +84,7 @@ python -m pytest -q
 - 反擊傷害不觸發〖吸血〗。
 
 ### 〖格檔〗
-目前 repo 的 `關鍵字系統.md` 尚未定義〖格檔〗，v4 Prototype 將它正式化為：
+目前 repo 的 `關鍵字系統.md` 尚未定義〖格檔〗，v5 Prototype 將它正式化為：
 
 > 每次受到戰鬥傷害時，使該次傷害減少 1 點，最低降至 0。
 
@@ -93,7 +93,7 @@ python -m pytest -q
 - 若之後正式規則修改，只需要調整 `Game._combat_damage_to_unit()`。
 
 ### 生命值修正
-舊版以 `max_health - damage` 推算現有生命，因此永久增加最大生命值時會同步提高畫面上的現有生命，看起來像額外治療。v4 改成獨立保存 `health`：
+舊版以 `max_health - damage` 推算現有生命，因此永久增加最大生命值時會同步提高畫面上的現有生命，看起來像額外治療。v5 改成獨立保存 `health`：
 
 - `heal`：只增加現有生命，最多至最大生命。
 - `modify_max_health`：只修改上限，不恢復現有生命。
@@ -116,4 +116,30 @@ python -m pytest -q
 python -m pytest -q
 ```
 
-v4 目前測試包含：Combat、Transform、Spell Resolver、Mulligan、〖庇護〗、〖吸血〗、〖格檔〗、最大生命不等於治療，共 10 項通過。
+v5 目前測試包含：Combat、Transform、Spell Resolver、Mulligan、〖庇護〗、〖吸血〗、〖格檔〗、最大生命不等於治療，共 10 項通過。
+
+
+## v5 追加規則
+
+### 〖迴避〗
+- 持有〖迴避〗的單位不會成為敵方 Unit 的合法攻擊目標。
+- 若敵方另有可攻擊的〖庇護〗單位，〖庇護〗仍限制攻擊只能指向那些〖庇護〗單位。
+- 〖迴避〗不阻止 Spell / Ability / Effect 指定。
+- 依關鍵字規則，〖庇護〗與〖迴避〗不能同時存在於同一單位；Effect Resolver 也會阻止此組合。
+
+### 最大生命值增加
+新規則為「最大生命值增加 X → 現有生命值同步 +X」。
+
+例如：
+```
+1/4
+最大生命值 +2
+-> 3/6
+```
+
+此規則適用於：
+- 永久 `modify_max_health`
+- 暫時 `modify_max_health`
+- 翻面造成的卡面基礎最大生命值上升
+
+最大生命值降低不會治療；現有生命值只會在必要時被壓回新的最大生命值。

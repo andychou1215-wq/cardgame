@@ -67,7 +67,7 @@ def test_block_reduces_combat_damage_only(tmp_path: Path):
     assert defender.current_health == defender.max_health - 2
 
 
-def test_heal_target_excludes_full_health_and_max_hp_buff_does_not_restore(tmp_path: Path):
+def test_heal_target_excludes_full_health_and_max_hp_buff_restores_same_amount(tmp_path: Path):
     make_repo(tmp_path)
     data = GameData(tmp_path)
     game = Game(data, "D001", "D002", seed=22)
@@ -78,9 +78,9 @@ def test_heal_target_excludes_full_health_and_max_hp_buff_does_not_restore(tmp_p
     unit.entered_turn = 0
     game.players[0].battlefield = [unit]
 
-    # Direct model-level max HP increase must not restore HP.
+    # New rule: max HP +X also restores X current HP.
     unit.take_damage(1)
     hp_before = unit.current_health
     unit.increase_max_health(1)
-    assert unit.current_health == hp_before
+    assert unit.current_health == hp_before + 1
     assert unit.max_health == 4

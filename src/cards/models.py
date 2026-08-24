@@ -146,13 +146,27 @@ class UnitInstance(CardInstance):
         self.total_damage_taken += dealt
         return dealt
 
-    def increase_max_health(self, amount: int) -> None:
-        """Increase max-health capacity without restoring current health."""
-        self.permanent_health_bonus += amount
-        self.clamp_health()
+    def increase_max_health(self, amount: int) -> int:
+        """Change permanent max health.
 
-    def add_timed_max_health(self, amount: int, duration: str, source_player_index: int) -> None:
+        New game rule: when max health increases by X, current health also
+        increases by X. A decrease never heals and current health is clamped
+        to the new maximum.
+        """
+        before_health = self.current_health
+        self.permanent_health_bonus += amount
+        if amount > 0:
+            self.health = before_health + amount
+        self.clamp_health()
+        return self.current_health - before_health
+
+    def add_timed_max_health(self, amount: int, duration: str, source_player_index: int) -> int:
+        """Add a temporary max-health modifier and heal by the positive increase."""
+        before_health = self.current_health
         self.timed_modifiers.append(
             TimedModifier("max_health", amount, duration=duration, source_player_index=source_player_index)
         )
+        if amount > 0:
+            self.health = before_health + amount
         self.clamp_health()
+        return self.current_health - before_health

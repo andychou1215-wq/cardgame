@@ -281,14 +281,25 @@ class Game:
         return [u for u in self.active_player.battlefield if u.can_attack(self.turn_number)]
 
     def legal_attack_targets(self) -> list[TargetRef]:
+        """Return legal targets for an enemy Unit attack.
+
+        Repo keyword rules:
+        - 〖迴避〗 units cannot be attacked by enemy Unit cards.
+        - If one or more attackable 〖庇護〗 units exist, only those units may be attacked.
+        - 〖庇護〗 and 〖迴避〗 are mutually exclusive by card/effect design.
+        """
         if not self.game_started:
             return []
         opponent_index = 1 - self.active_player_index
         opponent_units = list(self.inactive_player.battlefield)
-        sheltered = [u for u in opponent_units if u.has_keyword("庇護")]
+
+        attackable_units = [u for u in opponent_units if not u.has_keyword("迴避")]
+        sheltered = [u for u in attackable_units if u.has_keyword("庇護")]
+
         if sheltered:
             return [TargetRef("unit", opponent_index, u.instance_id) for u in sheltered]
-        targets = [TargetRef("unit", opponent_index, u.instance_id) for u in opponent_units]
+
+        targets = [TargetRef("unit", opponent_index, u.instance_id) for u in attackable_units]
         targets.append(TargetRef("leader", opponent_index))
         return targets
 
@@ -464,9 +475,20 @@ class Game:
         return False
 
     def _transform(self, unit: UnitInstance, owner_index: int) -> None:
+        before_max = unit.max_health
+        before_health = unit.current_health
         unit.current_side = "back"
+        after_max = unit.max_health
+        max_increase = max(0, after_max - before_max)
+        if max_increase > 0:
+            unit.health = before_health + max_increase
         unit.clamp_health()
         self.log(f"{unit.card_id} {unit.name} 達成翻面條件，翻至反面。")
+        if max_increase > 0:
+            self.log(
+                f"{unit.card_id} 翻面使最大生命值增加 {max_increase}，"
+                f"同步回復 {unit.current_health - before_health} 點現有生命。"
+            )
         self._queue_trigger(unit, "on_flip", owner_index=owner_index)
 
     # ---------- Effects ----------
@@ -591,21 +613,37 @@ class Game:
                 if target is None:
                     continue
                 kind = "attack" if effect.operation == "modify_attack" else "max_health"
+                healed_with_max_hp = 0
                 if effect.duration == "permanent":
                     if kind == "attack":
                         target.permanent_attack_bonus += effect.value
                     else:
-                        target.increase_max_health(effect.value)
+                        healed_with_max_hp = target.increase_max_health(effect.value)
                 else:
                     if kind == "max_health":
-                        target.add_timed_max_health(effect.value, effect.duration, queued.source_player_index)
+                        healed_with_max_hp = target.add_timed_max_health(
+                            effect.value, effect.duration, queued.source_player_index
+                        )
                     else:
                         target.timed_modifiers.append(TimedModifier(kind, effect.value, duration=effect.duration, source_player_index=queued.source_player_index))
                 self.log(f"{effect.effect_id}: {target.card_id} {kind} {effect.value:+d} ({effect.duration})。")
+                if kind == "max_health" and effect.value > 0:
+                    self.log(
+                        f"{effect.effect_id}: 最大生命值增加同步使 {target.card_id} "
+                        f"回復 {healed_with_max_hp} 點現有生命。"
+                    )
             elif effect.operation == "add_keyword":
                 target = self.find_unit(ref.instance_id)
                 if target is None:
                     continue
+                if effect.parameter in {"庇護", "迴避"}:
+                    opposite = "迴避" if effect.parameter == "庇護" else "庇護"
+                    if target.has_keyword(opposite):
+                        self.log(
+                            f"{effect.effect_id}: {target.card_id} 已具有〖{opposite}〗，"
+                            f"依規則不能再獲得〖{effect.parameter}〗。"
+                        )
+                        continue
                 if effect.duration == "permanent":
                     target.permanent_keywords.add(effect.parameter)
                 else:
@@ -618,9 +656,17 @@ class Game:
         if selected is not None:
             return [selected]
         if effect.target == "all_ally_units":
-            return [TargetRef("unit", source_player_index, u.instance_id) for u in self.players[source_player_index].battlefield]
+            units = list(self.players[source_player_index].battlefield)
+            if effect.operation == "add_keyword" and effect.parameter in {"庇護", "迴避"}:
+                opposite = "迴避" if effect.parameter == "庇護" else "庇護"
+                units = [u for u in units if not u.has_keyword(opposite)]
+            return [TargetRef("unit", source_player_index, u.instance_id) for u in units]
         if effect.target == "all_other_ally_units":
-            return [TargetRef("unit", source_player_index, u.instance_id) for u in self.players[source_player_index].battlefield if u.instance_id != source_id]
+            units = [u for u in self.players[source_player_index].battlefield if u.instance_id != source_id]
+            if effect.operation == "add_keyword" and effect.parameter in {"庇護", "迴避"}:
+                opposite = "迴避" if effect.parameter == "庇護" else "庇護"
+                units = [u for u in units if not u.has_keyword(opposite)]
+            return [TargetRef("unit", source_player_index, u.instance_id) for u in units]
         candidates = self._candidate_targets(effect, source_id, source_player_index, trigger_target)
         return candidates[:1] if candidates else []
 
@@ -654,6 +700,13 @@ class Game:
             keyword = filters.get("keyword")
             if keyword and not u.has_keyword(keyword):
                 continue
+            # 〖庇護〗 and 〖迴避〗 are mutually exclusive by keyword rule.
+            if effect.operation == "add_keyword":
+                if effect.parameter == "庇護" and u.has_keyword("迴避"):
+                    continue
+                if effect.parameter == "迴避" and u.has_keyword("庇護"):
+                    continue
+
             # Healing a full-health unit is not a legal target; this prevents no-op heals
             # and makes heal_count track successful healing events only.
             if effect.operation == "heal" and u.current_health >= u.max_health:
