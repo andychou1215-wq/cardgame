@@ -11,15 +11,23 @@ ScenarioAssert = Callable[[Any], tuple[bool, str] | bool]
 
 @dataclass(frozen=True)
 class Scenario:
+    # Keep `name` first for backward compatibility with the original M1/M2 tests:
+    # Scenario("increment", arrange=..., act=..., verify=...)
     name: str
     arrange: ScenarioStep
     act: ScenarioAct
     verify: ScenarioAssert
     description: str = ""
+    scenario_id: str = ""
+
+    @property
+    def id(self) -> str:
+        return self.scenario_id or self.name
 
 
 @dataclass(frozen=True)
 class ScenarioResult:
+    scenario_id: str
     name: str
     passed: bool
     message: str = ""
@@ -35,9 +43,19 @@ def run_scenario(game: Any, scenario: Scenario) -> ScenarioResult:
             passed, message = checked
         else:
             passed, message = bool(checked), ""
-        return ScenarioResult(scenario.name, passed, message)
-    except Exception as exc:  # scenario runner should report, not hide, failures
-        return ScenarioResult(scenario.name, False, error=f"{type(exc).__name__}: {exc}")
+        return ScenarioResult(
+            scenario_id=scenario.id,
+            name=scenario.name,
+            passed=passed,
+            message=message,
+        )
+    except Exception as exc:
+        return ScenarioResult(
+            scenario_id=scenario.id,
+            name=scenario.name,
+            passed=False,
+            error=f"{type(exc).__name__}: {exc}",
+        )
 
 
 def run_scenarios(game_factory: Callable[[], Any], scenarios: list[Scenario]) -> list[ScenarioResult]:

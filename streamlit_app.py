@@ -5,6 +5,7 @@ import streamlit as st
 
 from src.core.game import Game
 from src.deck.loader import DataError, GameData
+from src.ui.playtest_panel import playtest_data_panel
 from src.ui.components import (
     activated_controls,
     artifact_row,
@@ -35,7 +36,7 @@ def reset_game(deck1: str, deck2: str) -> None:
     st.session_state.pop("flash", None)
 
 
-st.title("🃏 卡牌對決 — Streamlit Prototype v4")
+st.title("🃏 卡牌對決 — Streamlit Prototype v5")
 st.caption("Mulligan + 〖庇護〗/〖吸血〗/〖格檔〗 + Combat + Transform + 完整生命值模型 + effects.csv Resolver。")
 
 try:
@@ -114,6 +115,8 @@ elif game.winner_index is None:
         if not ok:
             st.session_state["flash"] = ("error", message)
         st.rerun()
+
+playtest_data_panel(game)
 
 with st.expander("Prototype 規則假設 / 已知限制"):
     st.markdown(

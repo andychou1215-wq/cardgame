@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 from src.cards.models import CardInstance, TimedModifier, UnitInstance
 from src.deck.loader import GameData, LeaderDefinition
 from src.effects.models import EffectDefinition, TargetRef
+from src.core.events import TriggerEvent, TriggerQueue
+from src.core.state_based import StateBasedCheck
+from src.playtest.telemetry import PlaytestRecorder
 
 
 STARTING_HAND = 5
@@ -71,6 +74,9 @@ class Game:
         self.active_player_index = 0
         self.log_entries: list[str] = []
         self.effect_queue: list[QueuedEffect] = []
+        self.trigger_queue = TriggerQueue()
+        self.state_based = StateBasedCheck()
+        self.telemetry = PlaytestRecorder(seed=seed)
         self.pending_choice: PendingChoice | None = None
         self.pending_combat: PendingCombat | None = None
         self.usage_counts: dict[tuple[str, str, int, int], int] = {}
@@ -199,6 +205,7 @@ class Game:
         player.mana -= card.cost
         played = player.hand.pop(hand_index)
         self.log(f"{player.name} 打出 {played.card_id} {played.name}，消耗 {played.cost} 魔力。")
+        self.telemetry.record("card_played", turn=self.turn_number, active_player=self.active_player_index, player_index=self.active_player_index, card_id=played.card_id, source_id=played.instance_id)
 
         if played.card_type == "unit":
             assert isinstance(played, UnitInstance)
@@ -316,6 +323,7 @@ class Game:
         self.pending_combat = PendingCombat(attacker_id, defender, self.active_player_index)
         target_name = self.describe_target(defender)
         self.log(f"{self.active_player.name} 宣告 {attacker.card_id} {attacker.name} 攻擊 {target_name}。")
+        self.telemetry.record("attack_declared", turn=self.turn_number, active_player=self.active_player_index, player_index=self.active_player_index, card_id=attacker.card_id, source_id=attacker.instance_id, target=defender)
         return True, "已進入 Response Window。"
 
     def available_responses(self) -> list[tuple[int, CardInstance, EffectDefinition]]:
@@ -352,12 +360,13 @@ class Game:
         player.graveyard.append(card)
         combat.response_used = True
         self.log(f"{player.name} 使用 Response {card.card_id} {card.name}。")
+        self.telemetry.record("response_played", turn=self.turn_number, active_player=self.active_player_index, player_index=defending_index, card_id=card.card_id, source_id=card.instance_id, target=combat.defender)
         for effect in effects:
             self._resolve_effect(
                 QueuedEffect(effect, card.instance_id, defending_index, trigger_target=combat.defender),
                 combat.defender,
             )
-        self._handle_deaths()
+        self._run_state_based_check()
         self.process_effect_queue()
         return True, "Response 已使用。"
 
@@ -425,8 +434,8 @@ class Game:
             if attacker.current_health <= 0:
                 target.kills += 1
 
-        # State-based deaths are collected simultaneously, then on_leave triggers are queued.
-        self._handle_deaths()
+        # Central state-based checkpoint handles simultaneous deaths before later trigger chains.
+        self._run_state_based_check()
         self._expire_modifiers("until_attack_end")
         self.pending_combat = None
         self.process_effect_queue()
@@ -484,6 +493,7 @@ class Game:
             unit.health = before_health + max_increase
         unit.clamp_health()
         self.log(f"{unit.card_id} {unit.name} 達成翻面條件，翻至反面。")
+        self.telemetry.record("transform", turn=self.turn_number, active_player=self.active_player_index, player_index=owner_index, card_id=unit.card_id, source_id=unit.instance_id)
         if max_increase > 0:
             self.log(
                 f"{unit.card_id} 翻面使最大生命值增加 {max_increase}，"
@@ -496,8 +506,16 @@ class Game:
         if owner_index is None:
             owner_index = self.owner_of_card(source.instance_id)
         side = source.current_side if isinstance(source, UnitInstance) else "none"
-        for effect in self.data.effects_for(source.card_id, trigger, side):
-            self.effect_queue.append(QueuedEffect(effect, source.instance_id, owner_index, trigger_target))
+        self.trigger_queue.push(
+            TriggerEvent(
+                trigger=trigger,
+                source_id=source.instance_id,
+                card_id=source.card_id,
+                side=side,
+                owner_index=owner_index,
+                trigger_target=trigger_target,
+            )
+        )
 
     def enqueue_trigger(self, source: CardInstance, trigger: str, owner_index: int | None = None, trigger_target: TargetRef | None = None) -> None:
         self._queue_trigger(source, trigger, owner_index, trigger_target)
@@ -523,13 +541,30 @@ class Game:
             guard = 0
             while guard < 200 and not self.pending_choice:
                 guard += 1
+                if self.trigger_queue:
+                    event = self.trigger_queue.pop()
+                    self.telemetry.record(
+                        "trigger",
+                        turn=self.turn_number,
+                        active_player=self.active_player_index,
+                        player_index=event.owner_index,
+                        card_id=event.card_id,
+                        source_id=event.source_id,
+                        target=event.trigger_target,
+                        metadata={"trigger": event.trigger, "side": event.side},
+                    )
+                    for effect in self.data.effects_for(event.card_id, event.trigger, event.side):
+                        self.effect_queue.append(
+                            QueuedEffect(effect, event.source_id, event.owner_index, event.trigger_target)
+                        )
+                    continue
                 if self.effect_queue:
                     queued = self.effect_queue.pop(0)
                     effect = queued.effect
                     candidates = self._candidate_targets(effect, queued.source_id, queued.source_player_index, queued.trigger_target)
                     if effect.target in {"all_ally_units", "all_other_ally_units"}:
                         self._resolve_effect(queued, None)
-                        self._handle_deaths()
+                        self._run_state_based_check()
                         continue
                     if effect.target_required:
                         if not candidates:
@@ -539,25 +574,34 @@ class Game:
                             continue
                         if len(candidates) == 1:
                             self._resolve_effect(queued, candidates[0])
-                            self._handle_deaths()
+                            self._run_state_based_check()
                         else:
                             self.pending_choice = PendingChoice(queued, candidates, effect.effect_text or "選擇效果目標")
                             break
                     else:
                         target = candidates[0] if len(candidates) == 1 else None
                         self._resolve_effect(queued, target)
-                        self._handle_deaths()
+                        self._run_state_based_check()
                     continue
 
-                # No queued effects: resolve state-based deaths, then transforms.
-                if self._handle_deaths():
-                    continue
-                if self.check_transforms():
+                # No queued work: run one authoritative state-based checkpoint.
+                state = self._run_state_based_check()
+                if state.changed:
                     continue
                 break
             self._check_winner()
         finally:
             self._processing_effects = False
+
+    def _run_state_based_check(self):
+        result = self.state_based.run_once(self)
+        self.telemetry.record(
+            "state_based_check",
+            turn=self.turn_number,
+            active_player=self.active_player_index,
+            metadata={"changed": result.changed, "deaths": result.deaths, "transforms": result.transforms, "winner_changed": result.winner_changed},
+        )
+        return result
 
     def resolve_pending_choice(self, target: TargetRef) -> tuple[bool, str]:
         pending = self.pending_choice
@@ -567,7 +611,7 @@ class Game:
             return False, "選擇的目標不合法。"
         self.pending_choice = None
         self._resolve_effect(pending.queued, target)
-        self._handle_deaths()
+        self._run_state_based_check()
         self.process_effect_queue()
         return True, "效果目標已選擇並完成結算。"
 

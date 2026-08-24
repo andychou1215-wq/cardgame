@@ -6,13 +6,6 @@ from typing import Any
 
 @dataclass(frozen=True)
 class TriggerEvent:
-    """A rules trigger waiting to be converted into one or more card effects.
-
-    The event stores a snapshot of the source card identity/side so that
-    on_leave and on_flip still resolve correctly even after the source moves
-    zones or changes state.
-    """
-
     trigger: str
     source_id: str
     card_id: str
@@ -23,13 +16,6 @@ class TriggerEvent:
 
 
 class TriggerQueue:
-    """FIFO trigger queue.
-
-    AP/NAP ordering is produced by enqueue order.  The Game engine remains
-    responsible for collecting simultaneous events in AP/NAP order before
-    pushing them here.
-    """
-
     def __init__(self) -> None:
         self._items: list[TriggerEvent] = []
 
