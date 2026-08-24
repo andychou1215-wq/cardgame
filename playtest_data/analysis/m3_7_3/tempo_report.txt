@@ -1,0 +1,43 @@
+=== M3.7.3 Tempo / Board Development ===
+
+Deck: D001
+  avg_unit_count=1.722
+  avg_board_attack=4.916
+  avg_board_health=5.778
+  avg_survival_conversion=0.413
+  early T1-T3:
+    avg_unit_count=0.720
+    avg_board_attack=1.134
+    avg_board_health=1.491
+
+Deck: D002
+  avg_unit_count=2.125
+  avg_board_attack=3.837
+  avg_board_health=6.135
+  avg_survival_conversion=0.428
+  early T1-T3:
+    avg_unit_count=1.013
+    avg_board_attack=1.215
+    avg_board_health=1.801
+
+=== Board Comparison (D001 - D002) ===
+  avg_unit_count: -0.403
+  avg_board_attack: 1.079
+  avg_board_health: -0.357
+  avg_survival_conversion: -0.016
+  avg_unit_count_t1_3: -0.293
+  avg_board_attack_t1_3: -0.081
+  avg_board_health_t1_3: -0.310
+
+=== First Board Advantage ===
+  attack D001: games=2246 avg_turn=2.091
+  attack D002: games=2754 avg_turn=1.920
+  health D001: games=2216 avg_turn=1.965
+  health D002: games=2784 avg_turn=1.892
+  unit D001: games=1947 avg_turn=2.243
+  unit D002: games=3052 avg_turn=2.102
+
+Interpretation:
+  survival_conversion = surviving unit count / cumulative cards played.
+  Positive D001-D002 board deltas indicate stronger board conversion for D001.
+  This analyzer requires board_state_snapshot telemetry from new simulations.

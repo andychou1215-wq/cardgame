@@ -79,6 +79,10 @@ def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
     actions_taken = 0
     stalled = 0
 
+    # M3.7.3 — Track cumulative cards played per player for
+    # board-development / survival-conversion telemetry.
+    cards_played = [0, 0]
+
     while game.winner_index is None and actions_taken < max_actions:
         actor = decision_player_index(game)
         actions = legal_actions(game, actor)
@@ -100,6 +104,11 @@ def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
 
         stalled = 0
         action = bots[actor].rng.choice(actions)
+
+        # M3.7.3 — Count cards selected for play. The counter is simulation-local
+        # so the core GameState does not need a balance-analysis-only field.
+        if action.kind == PLAY_CARD:
+            cards_played[actor] += 1
 
         # M3.7.1 — Runtime Mana Curve telemetry.
         #
@@ -153,6 +162,56 @@ def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
                     "spend_actions_available": len(
                         spend_actions
                     ),
+                },
+            )
+
+            # M3.7.3 — Tempo / Board Development telemetry.
+            # Record immediately BEFORE END_TURN is executed so the snapshot
+            # represents the board the player actually leaves behind.
+            units = list(
+                getattr(player, "battlefield", []) or []
+            )
+
+            def _unit_attack(unit):
+                for attr in (
+                    "attack",
+                    "atk",
+                    "current_attack",
+                ):
+                    if hasattr(unit, attr):
+                        return int(
+                            getattr(unit, attr) or 0
+                        )
+                return 0
+
+            def _unit_health(unit):
+                for attr in (
+                    "health",
+                    "hp",
+                    "current_health",
+                ):
+                    if hasattr(unit, attr):
+                        return int(
+                            getattr(unit, attr) or 0
+                        )
+                return 0
+
+            game.telemetry.record(
+                "board_state_snapshot",
+                turn=game.turn_number,
+                active_player=game.active_player_index,
+                player_index=actor,
+                metadata={
+                    "unit_count": len(units),
+                    "board_attack": sum(
+                        _unit_attack(unit)
+                        for unit in units
+                    ),
+                    "board_health": sum(
+                        _unit_health(unit)
+                        for unit in units
+                    ),
+                    "cards_played_total": cards_played[actor],
                 },
             )
 
