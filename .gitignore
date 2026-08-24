@@ -9,3 +9,7 @@ venv/
 Thumbs.db
 playtest_data/raw/*.csv
 playtest_data/raw/*.json
+
+# Repo cleanup / Python local output
+repo_cleanup_report.json
+repo_cleanup_v1_1_report.json

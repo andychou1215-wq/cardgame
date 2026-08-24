@@ -4,6 +4,14 @@
 
 ## Unreleased
 
+### Repository Cleanup v1.1
+- 將 milestone / hotfix 說明文件移至 `archive/notes/`。
+- 測試依 unit / integration / scenarios 重新分類。
+- 保留 `test_engine_v2~v5` compatibility wrapper，避免 fixture imports 中斷。
+- 移除已由 `apps/` 取代的根目錄 Streamlit launcher。
+- 補充 Engine Architecture、Timing/Priority、Telemetry 與 Playtest Dashboard 文件。
+- 清理一次性 repo cleanup report 並加入 `.gitignore`。
+
 ### Added
 
 - 建立 Python + Streamlit 數位對戰 Prototype，作為主要 Playtest 環境。
