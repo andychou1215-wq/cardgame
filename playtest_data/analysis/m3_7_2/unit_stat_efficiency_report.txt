@@ -1,0 +1,48 @@
+=== M3.7.2 Unit Stat Efficiency ===
+
+Deck: D001
+  unit_copies=17
+  unique_units=7
+  avg_unit_cost=3.235
+  avg_front_stats_per_mana=2.028
+  avg_back_stats_per_mana=2.028
+  avg_transform_total_stat_delta=0.000
+  avg_front_efficiency_vs_cost_band=0.010
+
+  top front-body efficiency:
+    U001 哥布林: cost=1 front=1/2 SPM=3.000 vs_band=0.333 effects=1
+    U002 帝國騎士: cost=2 front=2/3 SPM=2.500 vs_band=0.333 effects=1
+    U004 帝國盾衛: cost=3 front=1/4 SPM=1.667 vs_band=0.167 effects=1
+    U006 飛龍: cost=4 front=3/5 SPM=2.000 vs_band=0.000 effects=1
+    U011 遺跡石像: cost=7 front=4/7 SPM=1.571 vs_band=0.000 effects=1
+
+Deck: D002
+  unit_copies=15
+  unique_units=6
+  avg_unit_cost=2.667
+  avg_front_stats_per_mana=2.087
+  avg_back_stats_per_mana=2.087
+  avg_transform_total_stat_delta=0.000
+  avg_front_efficiency_vs_cost_band=-0.011
+
+  top front-body efficiency:
+    U007 小精靈: cost=1 front=1/2 SPM=3.000 vs_band=0.333 effects=2
+    U008 精靈遊俠: cost=2 front=2/3 SPM=2.500 vs_band=0.333 effects=1
+    U013 聖獸: cost=6 front=3/7 SPM=1.667 vs_band=0.083 effects=1
+    U009 大樹守衛: cost=5 front=2/5 SPM=1.400 vs_band=0.000 effects=2
+    U010 慈愛精靈: cost=3 front=1/3 SPM=1.333 vs_band=-0.167 effects=2
+
+=== Deck Comparison (D001 - D002) ===
+  avg_unit_cost: 0.569
+  avg_front_attack: 0.576
+  avg_front_health: 0.447
+  avg_front_total_stats: 1.024
+  avg_front_stats_per_mana: -0.059
+  avg_back_stats_per_mana: -0.059
+  avg_transform_total_stat_delta: 0.000
+  avg_front_efficiency_vs_cost_band: 0.021
+
+Interpretation note:
+  Base stat efficiency uses (ATK + HP) / card Cost.
+  Effects and keywords are annotated but NOT assigned arbitrary point values.
+  Back-side efficiency is conditional value and should not be treated as guaranteed on-play value.

@@ -1,0 +1,3 @@
+﻿deck_id,unit_copies,unique_units,avg_unit_cost,avg_front_attack,avg_front_health,avg_front_total_stats,avg_front_stats_per_mana,avg_back_stats_per_mana,avg_transform_total_stat_delta,avg_front_efficiency_vs_cost_band
+D001,17,7,3.235294117647059,2.176470588235294,3.6470588235294117,5.823529411764706,2.0280112044817926,2.0280112044817926,0.0,0.00980392156862752
+D002,15,6,2.6666666666666665,1.6,3.2,4.8,2.086666666666667,2.086666666666667,0.0,-0.011111111111111042
