@@ -1,0 +1,43 @@
+--- a/src/playtest/simulation.py
++++ b/src/playtest/simulation.py
+@@
+-from src.ai.executor import execute_action
++from src.ai.actions import ACTIVATE_ABILITY, END_TURN, PLAY_CARD
++from src.ai.executor import execute_action
+@@
+-        action = bots[actor].rng.choice(actions)
++        action = bots[actor].rng.choice(actions)
++
++        # M3.7.1: capture end-of-turn resource state before END_TURN mutates
++        # active player / mana.  legal_actions() has already evaluated targets,
++        # board slots, activation limits, etc., so zero spend actions is a much
++        # better dead-hand signal than checking card cost alone.
++        if action.kind == END_TURN:
++            player = game.players[actor]
++            spend_actions = [
++                candidate
++                for candidate in actions
++                if candidate.kind in {PLAY_CARD, ACTIVATE_ABILITY}
++            ]
++            play_card_actions = [a for a in spend_actions if a.kind == PLAY_CARD]
++            activate_actions = [a for a in spend_actions if a.kind == ACTIVATE_ABILITY]
++            game.telemetry.record(
++                "turn_resource_snapshot",
++                turn=game.turn_number,
++                active_player=game.active_player_index,
++                player_index=actor,
++                amount=player.mana,
++                metadata={
++                    "max_mana": int(player.max_mana),
++                    "mana_remaining": int(player.mana),
++                    "mana_spent": int(player.max_mana - player.mana),
++                    "hand_size": len(player.hand),
++                    "play_card_actions_available": len(play_card_actions),
++                    "activate_actions_available": len(activate_actions),
++                    "spend_actions_available": len(spend_actions),
++                    "dead_hand": bool(
++                        player.hand and player.mana > 0 and not spend_actions
++                    ),
++                },
++            )
+         result = execute_action(game, action)

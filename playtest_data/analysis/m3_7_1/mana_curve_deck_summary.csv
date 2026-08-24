@@ -1,0 +1,3 @@
+deck_id,deck_size,average_cost,median_cost,cards_cost_le_1,opening_cost_playability_t1,cards_cost_le_2,opening_cost_playability_t2,cards_cost_le_3,opening_cost_playability_t3,turn_snapshots,avg_unused_mana,mana_efficiency,dead_hand_rate,avg_first_card_player_turn,avg_cards_played_by_player_turn_3
+D001,25,3.16,3.0,3,0.5043478260869565,12,0.9757763975155279,16,0.9976284584980237,57873,2.7435591726711936,0.5519428845556904,0.260086741658459,2.0636,1.7232
+D002,25,2.8,2.0,6,0.7811405985319029,15,0.9952569169960475,17,0.9989459815546772,56760,2.117723749119098,0.6498192316544164,0.16122269203664552,1.734,2.2788

@@ -1,0 +1,206 @@
+{
+  "curve_by_cost": [
+    {
+      "deck_id": "D001",
+      "cost": 1,
+      "copies": 3,
+      "share": 0.12
+    },
+    {
+      "deck_id": "D001",
+      "cost": 2,
+      "copies": 9,
+      "share": 0.36
+    },
+    {
+      "deck_id": "D001",
+      "cost": 3,
+      "copies": 4,
+      "share": 0.16
+    },
+    {
+      "deck_id": "D001",
+      "cost": 4,
+      "copies": 5,
+      "share": 0.2
+    },
+    {
+      "deck_id": "D001",
+      "cost": 6,
+      "copies": 2,
+      "share": 0.08
+    },
+    {
+      "deck_id": "D001",
+      "cost": 7,
+      "copies": 2,
+      "share": 0.08
+    },
+    {
+      "deck_id": "D002",
+      "cost": 1,
+      "copies": 6,
+      "share": 0.24
+    },
+    {
+      "deck_id": "D002",
+      "cost": 2,
+      "copies": 9,
+      "share": 0.36
+    },
+    {
+      "deck_id": "D002",
+      "cost": 3,
+      "copies": 2,
+      "share": 0.08
+    },
+    {
+      "deck_id": "D002",
+      "cost": 4,
+      "copies": 2,
+      "share": 0.08
+    },
+    {
+      "deck_id": "D002",
+      "cost": 5,
+      "copies": 4,
+      "share": 0.16
+    },
+    {
+      "deck_id": "D002",
+      "cost": 6,
+      "copies": 2,
+      "share": 0.08
+    }
+  ],
+  "deck_summary": [
+    {
+      "deck_id": "D001",
+      "deck_size": 25,
+      "average_cost": 3.16,
+      "median_cost": 3.0,
+      "cards_cost_le_1": 3,
+      "opening_cost_playability_t1": 0.5043478261,
+      "cards_cost_le_2": 12,
+      "opening_cost_playability_t2": 0.9757763975,
+      "cards_cost_le_3": 16,
+      "opening_cost_playability_t3": 0.9976284585,
+      "turn_snapshots": 57873,
+      "avg_unused_mana": 2.7435591727,
+      "mana_efficiency": 0.5519428846,
+      "dead_hand_rate": 0.2600867417,
+      "avg_first_card_player_turn": 2.0636,
+      "avg_cards_played_by_player_turn_3": 1.7232
+    },
+    {
+      "deck_id": "D002",
+      "deck_size": 25,
+      "average_cost": 2.8,
+      "median_cost": 2.0,
+      "cards_cost_le_1": 6,
+      "opening_cost_playability_t1": 0.7811405985,
+      "cards_cost_le_2": 15,
+      "opening_cost_playability_t2": 0.995256917,
+      "cards_cost_le_3": 17,
+      "opening_cost_playability_t3": 0.9989459816,
+      "turn_snapshots": 56760,
+      "avg_unused_mana": 2.1177237491,
+      "mana_efficiency": 0.6498192317,
+      "dead_hand_rate": 0.161222692,
+      "avg_first_card_player_turn": 1.734,
+      "avg_cards_played_by_player_turn_3": 2.2788
+    }
+  ],
+  "comparison": [
+    {
+      "metric": "deck_size",
+      "D001": 25.0,
+      "D002": 25.0,
+      "delta_first_minus_second": 0.0
+    },
+    {
+      "metric": "average_cost",
+      "D001": 3.16,
+      "D002": 2.8,
+      "delta_first_minus_second": 0.36
+    },
+    {
+      "metric": "median_cost",
+      "D001": 3.0,
+      "D002": 2.0,
+      "delta_first_minus_second": 1.0
+    },
+    {
+      "metric": "cards_cost_le_1",
+      "D001": 3.0,
+      "D002": 6.0,
+      "delta_first_minus_second": -3.0
+    },
+    {
+      "metric": "opening_cost_playability_t1",
+      "D001": 0.5043478261,
+      "D002": 0.7811405985,
+      "delta_first_minus_second": -0.2767927724
+    },
+    {
+      "metric": "cards_cost_le_2",
+      "D001": 12.0,
+      "D002": 15.0,
+      "delta_first_minus_second": -3.0
+    },
+    {
+      "metric": "opening_cost_playability_t2",
+      "D001": 0.9757763975,
+      "D002": 0.995256917,
+      "delta_first_minus_second": -0.0194805195
+    },
+    {
+      "metric": "cards_cost_le_3",
+      "D001": 16.0,
+      "D002": 17.0,
+      "delta_first_minus_second": -1.0
+    },
+    {
+      "metric": "opening_cost_playability_t3",
+      "D001": 0.9976284585,
+      "D002": 0.9989459816,
+      "delta_first_minus_second": -0.0013175231
+    },
+    {
+      "metric": "turn_snapshots",
+      "D001": 57873.0,
+      "D002": 56760.0,
+      "delta_first_minus_second": 1113.0
+    },
+    {
+      "metric": "avg_unused_mana",
+      "D001": 2.7435591727,
+      "D002": 2.1177237491,
+      "delta_first_minus_second": 0.6258354236
+    },
+    {
+      "metric": "mana_efficiency",
+      "D001": 0.5519428846,
+      "D002": 0.6498192317,
+      "delta_first_minus_second": -0.0978763471
+    },
+    {
+      "metric": "dead_hand_rate",
+      "D001": 0.2600867417,
+      "D002": 0.161222692,
+      "delta_first_minus_second": 0.0988640496
+    },
+    {
+      "metric": "avg_first_card_player_turn",
+      "D001": 2.0636,
+      "D002": 1.734,
+      "delta_first_minus_second": 0.3296
+    },
+    {
+      "metric": "avg_cards_played_by_player_turn_3",
+      "D001": 1.7232,
+      "D002": 2.2788,
+      "delta_first_minus_second": -0.5556
+    }
+  ]
+}

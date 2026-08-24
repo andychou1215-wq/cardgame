@@ -1,0 +1,39 @@
+=== M3.7.1 Mana Curve Analysis ===
+
+Deck: D001
+  deck_size=25
+  average_cost=3.160
+  median_cost=3.000
+  opening cost-only playability:
+    T1=50.43%
+    T2=97.58%
+    T3=99.76%
+  runtime telemetry:
+    avg_unused_mana=2.744
+    mana_efficiency=55.19%
+    dead_hand_rate=26.01%
+    avg_first_card_player_turn=2.064
+    avg_cards_played_by_player_turn_3=1.723
+
+Deck: D002
+  deck_size=25
+  average_cost=2.800
+  median_cost=2.000
+  opening cost-only playability:
+    T1=78.11%
+    T2=99.53%
+    T3=99.89%
+  runtime telemetry:
+    avg_unused_mana=2.118
+    mana_efficiency=64.98%
+    dead_hand_rate=16.12%
+    avg_first_card_player_turn=1.734
+    avg_cards_played_by_player_turn_3=2.279
+
+=== Curve Comparison ===
+  average_cost_delta(D001-D002)=0.360
+  T1_opening_playability_delta=-27.68%
+  T2_opening_playability_delta=-1.95%
+  T3_opening_playability_delta=-0.13%
+  mana_efficiency_delta=-9.79%
+  dead_hand_rate_delta=9.89%

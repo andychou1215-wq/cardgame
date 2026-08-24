@@ -13,3 +13,6 @@ playtest_data/raw/*.json
 # Repo cleanup / Python local output
 repo_cleanup_report.json
 repo_cleanup_v1_1_report.json
+
+# Generated playtest telemetry
+playtest_data/analysis/m3_7_1/m371_event_log.csv

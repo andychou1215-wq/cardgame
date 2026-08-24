@@ -6,6 +6,12 @@ from src.ai.legal_actions import legal_actions
 from src.ai.executor import execute_action
 from src.ai.random_bot import RandomBot
 
+from src.ai.actions import (
+    ACTIVATE_ABILITY,
+    END_TURN,
+    PLAY_CARD,
+)
+
 
 @dataclass
 class SimulationResult:
@@ -87,12 +93,69 @@ def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
                     game.turn_number,
                     actions_taken,
                     "stalled",
-                    "no legal actions; " + describe_decision_state(game, actor),
+                    "no legal actions; "
+                    + describe_decision_state(game, actor),
                 )
             continue
 
         stalled = 0
         action = bots[actor].rng.choice(actions)
+
+        # M3.7.1 — Runtime Mana Curve telemetry.
+        #
+        # Record the resource snapshot immediately BEFORE END_TURN is
+        # executed. After execute_action(), the active player / turn /
+        # mana state may already belong to the next turn.
+        if action.kind == END_TURN:
+            player = game.players[actor]
+
+            spend_actions = [
+                candidate
+                for candidate in actions
+                if candidate.kind in {
+                    PLAY_CARD,
+                    ACTIVATE_ABILITY,
+                }
+            ]
+
+            max_mana = int(
+                getattr(player, "max_mana", 0) or 0
+            )
+            mana_remaining = int(
+                getattr(player, "mana", 0) or 0
+            )
+            mana_spent = max(
+                0,
+                max_mana - mana_remaining,
+            )
+
+            hand_size = len(
+                getattr(player, "hand", []) or []
+            )
+
+            dead_hand = (
+                hand_size > 0
+                and mana_remaining > 0
+                and len(spend_actions) == 0
+            )
+
+            game.telemetry.record(
+                "turn_resource_snapshot",
+                turn=game.turn_number,
+                active_player=game.active_player_index,
+                player_index=actor,
+                metadata={
+                    "max_mana": max_mana,
+                    "mana_remaining": mana_remaining,
+                    "mana_spent": mana_spent,
+                    "hand_size": hand_size,
+                    "dead_hand": dead_hand,
+                    "spend_actions_available": len(
+                        spend_actions
+                    ),
+                },
+            )
+
         result = execute_action(game, action)
         actions_taken += 1
 
@@ -126,7 +189,10 @@ def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
         actions_taken,
         "action_limit",
         f"max_actions={max_actions}; "
-        + describe_decision_state(game, decision_player_index(game)),
+        + describe_decision_state(
+            game,
+            decision_player_index(game),
+        ),
     )
 
 
