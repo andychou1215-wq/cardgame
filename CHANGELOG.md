@@ -92,3 +92,6 @@
 
 - 建立專案資料夾架構。
 - 建立初版遊戲設計文件。
+- 將目前完整專案狀態定義為 v0.1.0。
+- 建立目前核心規則、卡牌資料、戰鬥系統與 Prototype 基準。
+- `cards.csv`、`unit_sides.csv`、`effects.csv` 等現有資料皆以此版本作為後續 Balance Patch 比較基準。
