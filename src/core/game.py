@@ -8,6 +8,7 @@ from src.deck.loader import GameData, LeaderDefinition
 from src.effects.models import EffectDefinition, TargetRef
 from src.core.events import TriggerEvent, TriggerQueue
 from src.core.state_based import StateBasedCheck
+from src.core.priority import PriorityWindow
 from src.playtest.telemetry import PlaytestRecorder
 
 
@@ -79,6 +80,8 @@ class Game:
         self.telemetry = PlaytestRecorder(seed=seed)
         self.pending_choice: PendingChoice | None = None
         self.pending_combat: PendingCombat | None = None
+        self.priority_window: PriorityWindow | None = None
+        self.first_player_index: int | None = None
         self.usage_counts: dict[tuple[str, str, int, int], int] = {}
         self.winner_index: int | None = None
         self._processing_effects = False
@@ -138,6 +141,7 @@ class Game:
 
         if all(self.mulligan_done):
             self.active_player_index = self.rng.randrange(2)
+            self.first_player_index = self.active_player_index
             self.game_started = True
             self._start_turn(initial=True)
             self.log(f"Mulligan 完成；隨機決定 {self.active_player.name} 為先手。")
@@ -321,54 +325,142 @@ class Game:
         if defender.key not in {t.key for t in self.legal_attack_targets()}:
             return False, "攻擊目標不合法。"
         self.pending_combat = PendingCombat(attacker_id, defender, self.active_player_index)
+        defending_index = 1 - self.active_player_index
+        self.priority_window = PriorityWindow(
+            first_player_index=defending_index,
+            reason="attack_declared",
+            trigger_target=defender,
+        )
         target_name = self.describe_target(defender)
         self.log(f"{self.active_player.name} 宣告 {attacker.card_id} {attacker.name} 攻擊 {target_name}。")
         self.telemetry.record("attack_declared", turn=self.turn_number, active_player=self.active_player_index, player_index=self.active_player_index, card_id=attacker.card_id, source_id=attacker.instance_id, target=defender)
         return True, "已進入 Response Window。"
 
-    def available_responses(self) -> list[tuple[int, CardInstance, EffectDefinition]]:
+    def available_responses(self, player_index: int | None = None) -> list[tuple[int, CardInstance, EffectDefinition]]:
         combat = self.pending_combat
-        if combat is None or combat.response_used:
+        window = self.priority_window
+        if combat is None or window is None or not window.is_open:
             return []
-        defending_index = 1 - combat.attacker_player_index
-        defender_player = self.players[defending_index]
-        if combat.defender.kind != "unit" or combat.defender.player_index != defending_index:
+
+        if player_index is None:
+            player_index = window.current_player_index
+        if player_index != window.current_player_index:
             return []
+
+        player = self.players[player_index]
         result = []
-        for idx, card in enumerate(defender_player.hand):
-            for effect in self.data.response_effects_for(card.card_id, "ally_becomes_attack_target"):
-                if defender_player.mana >= card.cost:
+        for idx, card in enumerate(player.hand):
+            effects = self.data.response_effects_for(card.card_id, "ally_becomes_attack_target")
+            if not effects or player.mana < card.cost:
+                continue
+            if combat.defender.kind == "unit" and combat.defender.player_index == player_index:
+                for effect in effects:
                     result.append((idx, card, effect))
         return result
 
-    def play_response(self, hand_index: int) -> tuple[bool, str]:
+    def play_response(self, hand_index: int, player_index: int | None = None) -> tuple[bool, str]:
         combat = self.pending_combat
-        if combat is None:
-            return False, "目前沒有 Response Window。"
-        defending_index = 1 - combat.attacker_player_index
-        player = self.players[defending_index]
-        if hand_index < 0 or hand_index >= len(player.hand):
-            return False, "Response 手牌索引無效。"
+        window = self.priority_window
+        if combat is None or window is None or not window.is_open:
+            return False, "目前沒有開啟中的 Response / Priority Window。"
+
+        if player_index is None:
+            player_index = window.current_player_index
+        if player_index != window.current_player_index:
+            return False, "目前不是此玩家的 Priority。"
+
+        legal_indices = {idx for idx, _, _ in self.available_responses(player_index)}
+        if hand_index not in legal_indices:
+            return False, "此卡不能在目前的 Priority Window 使用。"
+
+        player = self.players[player_index]
         card = player.hand[hand_index]
         effects = self.data.response_effects_for(card.card_id, "ally_becomes_attack_target")
         if not effects:
-            return False, "此卡不能在目前的 Response Window 使用。"
+            return False, "此卡沒有合法 Response 效果。"
         if card.cost > player.mana:
             return False, "魔力不足。"
+
         player.mana -= card.cost
         player.hand.pop(hand_index)
         player.graveyard.append(card)
-        combat.response_used = True
-        self.log(f"{player.name} 使用 Response {card.card_id} {card.name}。")
-        self.telemetry.record("response_played", turn=self.turn_number, active_player=self.active_player_index, player_index=defending_index, card_id=card.card_id, source_id=card.instance_id, target=combat.defender)
-        for effect in effects:
-            self._resolve_effect(
-                QueuedEffect(effect, card.instance_id, defending_index, trigger_target=combat.defender),
-                combat.defender,
+
+        bundle = [
+            QueuedEffect(effect, card.instance_id, player_index, trigger_target=combat.defender)
+            for effect in effects
+        ]
+        window.add_response(player_index, bundle)
+
+        self.log(
+            f"{player.name} 使用 Response {card.card_id} {card.name}；"
+            f"Priority 交給 {self.players[window.current_player_index].name}。"
+        )
+        if hasattr(self, "telemetry"):
+            self.telemetry.record(
+                "response_played",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=player_index,
+                card_id=card.card_id,
+                source_id=card.instance_id,
+                target=combat.defender,
+                metadata={"stack_size": window.stack_size},
             )
-        self._run_state_based_check()
-        self.process_effect_queue()
-        return True, "Response 已使用。"
+        return True, "Response 已加入 Stack，Priority 已交給對手。"
+
+    def pass_priority(self) -> tuple[bool, str]:
+        window = self.priority_window
+        if self.pending_combat is None or window is None or not window.is_open:
+            return False, "目前沒有可 Pass 的 Priority Window。"
+
+        player_index = window.current_player_index
+        player_name = self.players[player_index].name
+        closed = window.pass_priority(player_index)
+
+        if hasattr(self, "telemetry"):
+            self.telemetry.record(
+                "priority_pass",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=player_index,
+                metadata={
+                    "consecutive_passes": window.consecutive_passes,
+                    "closed": closed,
+                    "stack_size": window.stack_size,
+                },
+            )
+
+        if not closed:
+            self.log(
+                f"{player_name} Pass Priority；"
+                f"Priority 交給 {self.players[window.current_player_index].name}。"
+            )
+            return True, "已 Pass Priority。"
+
+        self.log("雙方連續 Pass；Response Stack 開始逆序結算。")
+        self._resolve_response_stack()
+        return True, "雙方已 Pass，Response Stack 結算完成，可進入戰鬥結算。"
+
+    def _resolve_response_stack(self) -> None:
+        window = self.priority_window
+        if window is None:
+            return
+
+        for bundle in window.drain_lifo():
+            self.effect_queue.extend(bundle)
+
+        if self.effect_queue:
+            self.process_effect_queue()
+
+        if hasattr(self, "_run_state_based_check"):
+            self._run_state_based_check()
+        else:
+            self._handle_deaths()
+
+    def priority_player_index(self) -> int | None:
+        if self.priority_window is None or not self.priority_window.is_open:
+            return None
+        return self.priority_window.current_player_index
 
     def _combat_damage_to_unit(self, target: UnitInstance, raw_amount: int) -> tuple[int, int]:
         """Return (actual damage, blocked damage). 〖格檔〗 only reduces combat damage by 1."""
@@ -387,13 +479,57 @@ class Game:
             self.log(f"〖吸血〗：{attacker.card_id} {attacker.name} 已滿生命，未回復生命。")
         return healed
 
+    def _priority_can_auto_pass(self) -> bool:
+        window = self.priority_window
+        if self.pending_combat is None or window is None or not window.is_open:
+            return False
+
+        original = window.current_player_index
+        try:
+            for player_index in (0, 1):
+                window.current_player_index = player_index
+                if self.available_responses(player_index):
+                    return False
+            return True
+        finally:
+            window.current_player_index = original
+
+    def _auto_pass_empty_priority_window(self) -> None:
+        window = self.priority_window
+        if window is None or not window.is_open:
+            return
+
+        first = window.current_player_index
+        closed = window.pass_priority(first)
+        if not closed:
+            second = window.current_player_index
+            window.pass_priority(second)
+        else:
+            second = 1 - first
+
+        if hasattr(self, "telemetry"):
+            self.telemetry.record(
+                "priority_auto_pass",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                metadata={"reason": "no_legal_responses", "first_player": first, "second_player": second},
+            )
+
+        self.log("雙方皆無合法 Response；自動視為連續 Pass。")
+
     def resolve_combat(self) -> tuple[bool, str]:
         combat = self.pending_combat
+        if self.priority_window is not None and self.priority_window.is_open:
+            if self._priority_can_auto_pass():
+                self._auto_pass_empty_priority_window()
+            else:
+                return False, "Priority Window 尚未關閉；需要雙方連續 Pass。"
         if combat is None:
             return False, "沒有等待中的戰鬥。"
         attacker = self.find_unit(combat.attacker_id)
         if attacker is None:
             self.pending_combat = None
+            self.priority_window = None
             return False, "攻擊者已離場，戰鬥取消。"
         defender = combat.defender
         attacker.attacks_this_turn += 1
@@ -409,6 +545,7 @@ class Game:
             target = self.find_unit(defender.instance_id)
             if target is None:
                 self.pending_combat = None
+                self.priority_window = None
                 return False, "防守單位已離場，戰鬥取消。"
 
             # Snapshot combat stats before simultaneous damage.
@@ -438,6 +575,7 @@ class Game:
         self._run_state_based_check()
         self._expire_modifiers("until_attack_end")
         self.pending_combat = None
+        self.priority_window = None
         self.process_effect_queue()
         self._check_winner()
         return True, "戰鬥結算完成。"

@@ -184,26 +184,60 @@ def response_window(game: Game) -> None:
     combat = game.pending_combat
     if combat is None:
         return
+
     attacker = game.find_unit(combat.attacker_id)
-    st.warning(f"Response Window：{attacker.card_id if attacker else '?'} 攻擊 {game.describe_target(combat.defender)}")
-    responses = game.available_responses()
-    if responses:
-        st.write("防守方可以使用：")
-        cols = st.columns(min(3, len(responses)))
-        for n, (hand_idx, card, effect) in enumerate(responses):
-            with cols[n % len(cols)]:
-                st.markdown(card_html(card), unsafe_allow_html=True)
-                if st.button("使用 Response", key=f"response_{card.instance_id}"):
-                    ok, message = game.play_response(hand_idx)
-                    st.session_state["flash"] = ("success" if ok else "error", message)
-                    st.rerun()
-    else:
-        st.caption("目前沒有可使用的 Response。")
-    if st.button("繼續戰鬥結算", type="primary"):
+    st.warning(
+        f"Response / Priority Window："
+        f"{attacker.card_id if attacker else '?'} 攻擊 "
+        f"{game.describe_target(combat.defender)}"
+    )
+
+    window = getattr(game, "priority_window", None)
+    if window is None:
+        st.error("Priority Window 尚未初始化。")
+        return
+
+    if window.is_open:
+        pidx = window.current_player_index
+        player = game.players[pidx]
+        st.info(
+            f"目前 Priority：{player.name} · "
+            f"Stack {window.stack_size} · "
+            f"連續 Pass {window.consecutive_passes}/2"
+        )
+
+        responses = game.available_responses(pidx)
+        if responses:
+            st.write(f"{player.name} 可以使用：")
+            cols = st.columns(min(3, len(responses)))
+            for n, (hand_idx, card, effect) in enumerate(responses):
+                with cols[n % len(cols)]:
+                    st.markdown(card_html(card), unsafe_allow_html=True)
+                    if st.button(
+                        "加入 Response Stack",
+                        key=f"response_{pidx}_{card.instance_id}",
+                    ):
+                        ok, message = game.play_response(hand_idx, pidx)
+                        st.session_state["flash"] = ("success" if ok else "error", message)
+                        st.rerun()
+        else:
+            st.caption(f"{player.name} 目前沒有合法 Response。")
+
+        if st.button(
+            f"{player.name} — Pass Priority",
+            type="primary",
+            use_container_width=True,
+        ):
+            ok, message = game.pass_priority()
+            st.session_state["flash"] = ("success" if ok else "error", message)
+            st.rerun()
+        return
+
+    st.success("雙方已連續 Pass；Response Stack 已結算。")
+    if st.button("進入戰鬥結算", type="primary", use_container_width=True):
         ok, message = game.resolve_combat()
         st.session_state["flash"] = ("success" if ok else "error", message)
         st.rerun()
-
 
 def sidebar(game: Game) -> None:
     with st.sidebar:

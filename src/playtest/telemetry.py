@@ -100,6 +100,7 @@ class PlaytestRecorder:
             result.update(
                 {
                     "winner_index": game.winner_index,
+                    "first_player_index": getattr(game, "first_player_index", None),
                     "turn_number": game.turn_number,
                     "active_player_index": game.active_player_index,
                     "leader_hp_p1": game.players[0].leader_health,
