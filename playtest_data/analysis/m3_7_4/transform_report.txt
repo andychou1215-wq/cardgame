@@ -1,0 +1,52 @@
+=== M3.7.4 Transform Efficiency ===
+
+Deck: D001
+  played_instances=57827
+  transformed_instances=18569
+  transform_rate_per_play=32.11%
+  avg_transform_turn=8.439
+  transforming_card_types=7
+  on_flip_trigger_count=18569
+  deck_win_rate=89.12%
+
+  transform cards:
+    U004: plays=5646 transforms=4806 rate=85.12% avg_turn=7.822 WR_when_transformed=90.57% delta_vs_deck=1.45% flip_triggers=4806
+    U011: plays=4590 transforms=3264 rate=71.11% avg_turn=10.455 WR_when_transformed=94.58% delta_vs_deck=5.46% flip_triggers=3264
+    U012: plays=5046 transforms=3521 rate=69.78% avg_turn=9.537 WR_when_transformed=98.32% delta_vs_deck=9.20% flip_triggers=3521
+    U001: plays=8859 transforms=3441 rate=38.84% avg_turn=5.976 WR_when_transformed=94.86% delta_vs_deck=5.74% flip_triggers=3441
+    U006: plays=5534 transforms=1455 rate=26.29% avg_turn=9.447 WR_when_transformed=98.49% delta_vs_deck=9.37% flip_triggers=1455
+    U002: plays=8690 transforms=1864 rate=21.45% avg_turn=8.069 WR_when_transformed=97.91% delta_vs_deck=8.79% flip_triggers=1864
+    U003: plays=8715 transforms=218 rate=2.50% avg_turn=9.417 WR_when_transformed=99.54% delta_vs_deck=10.42% flip_triggers=218
+
+Deck: D002
+  played_instances=80803
+  transformed_instances=26003
+  transform_rate_per_play=32.18%
+  avg_transform_turn=7.539
+  transforming_card_types=6
+  on_flip_trigger_count=26003
+  deck_win_rate=10.88%
+
+  transform cards:
+    U007: plays=12248 transforms=8859 rate=72.33% avg_turn=6.866 WR_when_transformed=10.83% delta_vs_deck=-0.05% flip_triggers=8859
+    U005: plays=12173 transforms=8174 rate=67.15% avg_turn=6.855 WR_when_transformed=11.11% delta_vs_deck=0.23% flip_triggers=8174
+    U009: plays=6069 transforms=2878 rate=47.42% avg_turn=9.789 WR_when_transformed=14.35% delta_vs_deck=3.47% flip_triggers=2878
+    U013: plays=5409 transforms=2221 rate=41.06% avg_turn=10.639 WR_when_transformed=0.72% delta_vs_deck=-10.16% flip_triggers=2221
+    U008: plays=11475 transforms=3194 rate=27.83% avg_turn=6.545 WR_when_transformed=24.20% delta_vs_deck=13.32% flip_triggers=3194
+    U010: plays=7194 transforms=677 rate=9.41% avg_turn=9.538 WR_when_transformed=29.99% delta_vs_deck=19.11% flip_triggers=677
+
+=== Transform / Outcome ===
+  D001 not_transformed: games=122 WR=29.51% avg_transforms=0.000
+  D001 transformed: games=4878 WR=90.61% avg_transforms=3.807
+  D002 not_transformed: games=65 WR=0.00% avg_transforms=0.000
+  D002 transformed: games=4935 WR=11.02% avg_transforms=5.269
+
+=== Deck Comparison (D001 - D002) ===
+  overall_transform_rate_per_play: -0.07%
+  avg_transform_turn_weighted: 0.900
+  on_flip_trigger_count: -7434.000
+
+Interpretation note:
+  transform_rate_per_play = unique transformed instances / unique played instances.
+  WR_when_transformed is associative, not causal: stronger games may simply survive long enough to transform.
+  on_flip_trigger_count verifies that Transform effects entered the trigger pipeline; it is not an arbitrary value score.
