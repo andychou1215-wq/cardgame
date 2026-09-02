@@ -1,0 +1,75 @@
+=== M3.7.5 Damage / Healing Profile ===
+
+Deck: D001
+  win_rate=88.84%
+  damage / game:
+    combat_to_leader=0.000
+    effect_to_leader=0.000
+    total_to_leader=0.000
+    combat_to_unit=0.000
+    effect_to_unit=0.000
+    total_damage=0.000
+  leader damage mix:
+    combat_share=n/a
+    effect_share=n/a
+  healing / game:
+    total=0.000
+    leader=0.000
+    unit=0.000
+    lifesteal=0.000
+    effect=0.000
+    max_health_sync=0.000
+    transform_max_health_sync=0.000
+    overheal=0.000
+    healing_efficiency=n/a
+  avg_net_leader_pressure=0.000
+
+Deck: D002
+  win_rate=11.16%
+  damage / game:
+    combat_to_leader=0.000
+    effect_to_leader=0.000
+    total_to_leader=0.000
+    combat_to_unit=0.000
+    effect_to_unit=0.000
+    total_damage=0.000
+  leader damage mix:
+    combat_share=n/a
+    effect_share=n/a
+  healing / game:
+    total=0.000
+    leader=0.000
+    unit=0.000
+    lifesteal=0.000
+    effect=0.000
+    max_health_sync=0.000
+    transform_max_health_sync=0.000
+    overheal=0.000
+    healing_efficiency=n/a
+  avg_net_leader_pressure=0.000
+
+=== Deck Comparison (D001 - D002) ===
+  avg_combat_damage_leader: 0.000
+  avg_effect_damage_leader: 0.000
+  avg_total_leader_damage: 0.000
+  avg_combat_damage_unit: 0.000
+  avg_effect_damage_unit: 0.000
+  avg_total_damage: 0.000
+  avg_total_healing: 0.000
+  avg_leader_healing: 0.000
+  avg_unit_healing: 0.000
+  avg_lifesteal_healing: 0.000
+  avg_effect_healing: 0.000
+  avg_max_health_sync_healing: 0.000
+  avg_transform_max_health_sync_healing: 0.000
+  avg_overheal: 0.000
+  healing_efficiency: n/a
+  leader_damage_combat_share: n/a
+  leader_damage_effect_share: n/a
+  avg_net_leader_pressure: 0.000
+
+Interpretation:
+  Leader damage is split into combat and effect channels.
+  Heal uses actual restored HP; requested_amount and overheal are kept separately.
+  Max-HP synchronized healing is tracked separately from ordinary heal effects.
+  avg_net_leader_pressure is descriptive (leader damage dealt minus own leader healing), not a causal game-state metric.
