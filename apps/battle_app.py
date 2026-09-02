@@ -23,7 +23,7 @@ from src.ui.components import (
 
 st.set_page_config(page_title="卡牌對決 Streamlit Prototype", page_icon="🃏", layout="wide")
 inject_css()
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @st.cache_resource

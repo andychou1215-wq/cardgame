@@ -138,7 +138,9 @@ Card Game/
 │  └─ ui/
 │
 ├─ tests/
-├─ streamlit_app.py
+├─ apps/
+│  ├─ battle_app.py
+│  └─ playtest_dashboard.py
 ├─ requirements.txt
 ├─ CHANGELOG.md
 └─ README.md
@@ -161,14 +163,14 @@ Windows PowerShell：
 ```powershell
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-python -m streamlit run streamlit_app.py
+python -m streamlit run apps/battle_app.py
 ```
 
 如果 PowerShell 執行原則阻止啟用虛擬環境，也可以直接使用：
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
+.\.venv\Scripts\python.exe -m streamlit run apps/battle_app.py
 ```
 
 ## 測試

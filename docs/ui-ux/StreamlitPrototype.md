@@ -27,14 +27,14 @@
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python -m streamlit run streamlit_app.py
+python -m streamlit run apps/battle_app.py
 ```
 
 若 PowerShell 不允許啟用虛擬環境：
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
+.\.venv\Scripts\python.exe -m streamlit run apps/battle_app.py
 ```
 
 ## Mulligan 規則（Prototype v5）
