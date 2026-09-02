@@ -145,3 +145,77 @@ def test_u012_front_effect_data_expires_at_turn_end():
     assert {effect.effect_id for effect in effects} == {"E019", "E020"}
     assert {effect.duration for effect in effects} == {"until_turn_end"}
     assert all("到本回合結束" in effect.effect_text for effect in effects)
+
+
+def test_u012_back_shelter_extends_same_buff_without_stacking():
+    root = Path(__file__).resolve().parents[2]
+    data = GameData(root)
+    game = Game(data, "D001", "D002", seed=14)
+    start_game(game)
+    game.active_player_index = 0
+
+    source = next(card for card in data.build_deck("D001") if card.card_id == "U012")
+    sheltered = next(card for card in data.build_deck("D001") if card.card_id == "U011")
+    normal = next(card for card in data.build_deck("D001") if card.card_id == "U001")
+    for unit in (source, sheltered, normal):
+        unit.owner_index = 0
+        unit.entered_turn = 0
+    source.current_side = "back"
+    source.permanent_keywords.add("庇護")
+    game.players[0].battlefield = [source, sheltered, normal]
+
+    sheltered_attack = sheltered.attack
+    sheltered_health = sheltered.max_health
+    normal_attack = normal.attack
+    normal_health = normal.max_health
+
+    effects = data.effects_for("U012", "on_flip", "back")
+    assert [effect.effect_id for effect in effects] == ["E021", "E022", "E028", "E029"]
+    for effect in effects:
+        game._resolve_effect(QueuedEffect(effect, source.instance_id, 0), None)
+
+    assert source.attack == 3
+    assert source.max_health == 6
+    assert sheltered.attack == sheltered_attack + 1
+    assert sheltered.max_health == sheltered_health + 1
+    assert normal.attack == normal_attack + 1
+    assert normal.max_health == normal_health + 1
+    sheltered_modifiers = [
+        modifier
+        for modifier in sheltered.timed_modifiers
+        if modifier.kind in {"attack", "max_health"}
+    ]
+    assert len(sheltered_modifiers) == 2
+    assert {modifier.duration for modifier in sheltered_modifiers} == {
+        "until_opponent_turn_end"
+    }
+    extension_events = [
+        event
+        for event in game.telemetry.events
+        if event.event_type == "modifier_extended"
+    ]
+    assert [event.metadata["kind"] for event in extension_events] == [
+        "attack",
+        "max_health",
+    ]
+    u012_heals = [
+        event
+        for event in game.telemetry.events
+        if event.event_type == "heal" and event.card_id == "U012"
+    ]
+    assert len(u012_heals) == 2
+    assert {event.metadata["effect_id"] for event in u012_heals} == {"E022"}
+
+    assert game.end_turn()[0]
+    assert source.attack == 3
+    assert source.max_health == 6
+    assert sheltered.attack == sheltered_attack + 1
+    assert sheltered.max_health == sheltered_health + 1
+    assert normal.attack == normal_attack
+    assert normal.max_health == normal_health
+
+    assert game.end_turn()[0]
+    assert source.attack == 3
+    assert source.max_health == 6
+    assert sheltered.attack == sheltered_attack
+    assert sheltered.max_health == sheltered_health

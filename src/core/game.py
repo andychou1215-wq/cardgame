@@ -1132,6 +1132,47 @@ class Game:
                         f"{effect.effect_id}: 最大生命值增加同步使 {target.card_id} "
                         f"回復 {healed_with_max_hp} 點現有生命。"
                     )
+            elif effect.operation == "extend_modifier_duration":
+                target = self.find_unit(ref.instance_id)
+                if target is None:
+                    continue
+                modifier = next(
+                    (
+                        item
+                        for item in reversed(target.timed_modifiers)
+                        if item.kind == effect.parameter
+                        and item.duration == "until_turn_end"
+                        and item.source_player_index == queued.source_player_index
+                    ),
+                    None,
+                )
+                if modifier is None:
+                    self.log(
+                        f"{effect.effect_id}: {target.card_id} 沒有可延長的 "
+                        f"{effect.parameter} 效果。"
+                    )
+                    continue
+                previous_duration = modifier.duration
+                modifier.duration = effect.duration
+                self.telemetry.record(
+                    "modifier_extended",
+                    turn=self.turn_number,
+                    active_player=self.active_player_index,
+                    player_index=queued.source_player_index,
+                    card_id=effect.card_id,
+                    source_id=queued.source_id,
+                    target=ref,
+                    metadata={
+                        "effect_id": effect.effect_id,
+                        "kind": effect.parameter,
+                        "from_duration": previous_duration,
+                        "to_duration": effect.duration,
+                    },
+                )
+                self.log(
+                    f"{effect.effect_id}: {target.card_id} 的 {effect.parameter} "
+                    f"效果延長至 {effect.duration}。"
+                )
             elif effect.operation == "add_keyword":
                 target = self.find_unit(ref.instance_id)
                 if target is None:
@@ -1155,18 +1196,10 @@ class Game:
     def _targets_for_resolution(self, effect: EffectDefinition, source_id: str, source_player_index: int, trigger_target: TargetRef | None, selected: TargetRef | None) -> list[TargetRef]:
         if selected is not None:
             return [selected]
-        if effect.target == "all_ally_units":
-            units = list(self.players[source_player_index].battlefield)
-            if effect.operation == "add_keyword" and effect.parameter in {"庇護", "迴避"}:
-                opposite = "迴避" if effect.parameter == "庇護" else "庇護"
-                units = [u for u in units if not u.has_keyword(opposite)]
-            return [TargetRef("unit", source_player_index, u.instance_id) for u in units]
-        if effect.target == "all_other_ally_units":
-            units = [u for u in self.players[source_player_index].battlefield if u.instance_id != source_id]
-            if effect.operation == "add_keyword" and effect.parameter in {"庇護", "迴避"}:
-                opposite = "迴避" if effect.parameter == "庇護" else "庇護"
-                units = [u for u in units if not u.has_keyword(opposite)]
-            return [TargetRef("unit", source_player_index, u.instance_id) for u in units]
+        if effect.target in {"all_ally_units", "all_other_ally_units"}:
+            return self._candidate_targets(
+                effect, source_id, source_player_index, trigger_target
+            )
         candidates = self._candidate_targets(effect, source_id, source_player_index, trigger_target)
         return candidates[:1] if candidates else []
 

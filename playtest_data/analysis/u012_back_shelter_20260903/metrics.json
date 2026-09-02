@@ -1,0 +1,164 @@
+{
+  "method": {
+    "date": "2026-09-03",
+    "seed": 20260902,
+    "mirror_groups_per_pairing": 50,
+    "games": 400,
+    "max_actions": 1000
+  },
+  "overall": {
+    "games": 400,
+    "finished": 400,
+    "finish_rate": 1.0,
+    "p1_wins": 200,
+    "p2_wins": 200,
+    "p1_win_rate": 0.5,
+    "avg_turns": 10.4,
+    "avg_actions": 150.71,
+    "stalled": 0,
+    "invalid_legal_action": 0,
+    "action_limit": 0
+  },
+  "pairings": {
+    "heuristic_vs_heuristic": {
+      "games": 100,
+      "d001_wins": 71,
+      "d001_win_rate": 0.71,
+      "p1_wins": 49,
+      "p1_win_rate": 0.49,
+      "avg_turns": 10.88,
+      "avg_actions": 180.39
+    },
+    "heuristic_vs_random": {
+      "games": 100,
+      "d001_wins": 54,
+      "d001_win_rate": 0.54,
+      "p1_wins": 96,
+      "p1_win_rate": 0.96,
+      "avg_turns": 9.27,
+      "avg_actions": 132.71
+    },
+    "random_vs_heuristic": {
+      "games": 100,
+      "d001_wins": 56,
+      "d001_win_rate": 0.56,
+      "p1_wins": 6,
+      "p1_win_rate": 0.06,
+      "avg_turns": 8.6,
+      "avg_actions": 126.05
+    },
+    "random_vs_random": {
+      "games": 100,
+      "d001_wins": 91,
+      "d001_win_rate": 0.91,
+      "p1_wins": 49,
+      "p1_win_rate": 0.49,
+      "avg_turns": 12.85,
+      "avg_actions": 163.69
+    }
+  },
+  "same_policy": {
+    "games": 200,
+    "d001_wins": 162,
+    "d001_win_rate": 0.81,
+    "wilson_95": [
+      0.7499876129240015,
+      0.8583282847220932
+    ]
+  },
+  "all_policy": {
+    "games": 400,
+    "d001_wins": 272,
+    "d001_win_rate": 0.68
+  },
+  "cross_policy": {
+    "games": 200,
+    "heuristic_wins": 190,
+    "heuristic_win_rate": 0.95
+  },
+  "board": {
+    "D001": {
+      "snapshots": 3781,
+      "avg_unit_count": 1.8714625760380852,
+      "avg_board_attack": 4.853477915895266,
+      "avg_board_health": 6.225337212377678,
+      "avg_survival_conversion": 0.4700078626264544,
+      "avg_unit_count_t1_3": 0.895644283121597,
+      "avg_board_attack_t1_3": 1.425589836660617,
+      "avg_board_health_t1_3": 1.9909255898366607
+    },
+    "D002": {
+      "snapshots": 3738,
+      "avg_unit_count": 2.176832530765115,
+      "avg_board_attack": 3.834403424291065,
+      "avg_board_health": 6.222043873729267,
+      "avg_survival_conversion": 0.47891491297607625,
+      "avg_unit_count_t1_3": 1.2468239564428312,
+      "avg_board_attack_t1_3": 1.5208711433756805,
+      "avg_board_health_t1_3": 2.232304900181488
+    }
+  },
+  "deck_game_metrics": {
+    "D001": {
+      "avg_combat_damage_leader": 14.7275,
+      "avg_combat_damage_unit": 25.9,
+      "avg_effect_damage": 0.3775,
+      "avg_effect_damage_unit": 0.3775,
+      "avg_max_health_sync_healing": 4.8875,
+      "avg_overheal": 0.0,
+      "avg_total_healing": 5.3475,
+      "avg_unit_healing": 5.3475,
+      "avg_total_damage": 41.004999999999995,
+      "avg_total_leader_damage": 14.7275,
+      "avg_net_leader_pressure": 14.7275
+    },
+    "D002": {
+      "avg_combat_damage_leader": 12.15,
+      "avg_combat_damage_unit": 21.1,
+      "avg_effect_damage": 3.7625,
+      "avg_effect_damage_unit": 3.7625,
+      "avg_leader_healing": 1.69,
+      "avg_max_health_sync_healing": 3.42,
+      "avg_overheal": 0.1875,
+      "avg_total_healing": 7.4575,
+      "avg_unit_healing": 5.7675,
+      "avg_total_damage": 37.0125,
+      "avg_total_leader_damage": 12.15,
+      "avg_net_leader_pressure": 10.46
+    }
+  },
+  "u012": {
+    "played_instances": 360,
+    "games_played": 273,
+    "transformed_instances": 262,
+    "games_transformed": 205,
+    "transform_rate_per_play": 0.7277777777777777,
+    "avg_transform_turn": 8.083969465648854,
+    "win_rate_when_transformed": 0.9198473282442748,
+    "bonus_eligible_transforms": 151,
+    "bonus_games": 123,
+    "effect_games": 231,
+    "bonus_coverage_per_transform": 0.5763358778625954,
+    "bonus_target_applications": 199,
+    "bonus_targets_per_transform": 0.7595419847328244,
+    "bonus_targets_per_eligible_transform": 1.3178807947019868,
+    "effect_target_applications": {
+      "E020": 568,
+      "E022": 643,
+      "E029": 199
+    },
+    "effect_actual_healing": {
+      "E020": 568,
+      "E022": 643,
+      "E029": 199
+    },
+    "bonus_target_cards": {
+      "U004": 82,
+      "U011": 86,
+      "U006": 4,
+      "U002": 6,
+      "U012": 20,
+      "U003": 1
+    }
+  }
+}
