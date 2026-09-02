@@ -465,15 +465,17 @@ def _pct(v):
 
 def render_report(result: dict[str, pd.DataFrame]) -> str:
     lines = ["=== M3.7.5 Damage / Healing Profile ===", ""]
+    profile_events = result["profile_events"]
     deck = result["deck_summary"]
     comparison = result["comparison"]
     damage_sources = result["damage_sources"]
     healing_sources = result["healing_sources"]
 
-    if deck.empty:
+    if profile_events.empty or deck.empty:
         lines.append(
             "No usable damage/heal telemetry found. "
-            "Apply M3.7.5 instrumentation and run fresh simulations."
+            "Run fresh simulations with the current instrumentation before "
+            "using this report for balance decisions."
         )
         return "\n".join(lines)
 

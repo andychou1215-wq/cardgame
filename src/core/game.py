@@ -119,8 +119,12 @@ class Game:
         return (not self.game_started) or self.pending_choice is not None or self.pending_combat is not None or self.winner_index is not None
 
     def _start_game(self) -> None:
-        for player in self.players:
-            player.draw(STARTING_HAND)
+        for player_index in range(len(self.players)):
+            self._draw_cards(
+                player_index,
+                STARTING_HAND,
+                reason="initial_hand",
+            )
         self.log("雙方各抽 5 張起手牌，進入 Mulligan 階段。")
 
     def mulligan_hand(self, selected_instance_ids: list[str]) -> tuple[bool, str]:
@@ -139,8 +143,23 @@ class Game:
         player.hand = [c for c in player.hand if c.instance_id not in selected]
         player.deck.extend(returned)
         self.rng.shuffle(player.deck)
-        drawn = player.draw(len(returned))
+        drawn = self._draw_cards(
+            pidx,
+            len(returned),
+            reason="mulligan",
+        )
         self.mulligan_done[pidx] = True
+        self.telemetry.record(
+            "mulligan",
+            turn=self.turn_number,
+            active_player=self.active_player_index,
+            player_index=pidx,
+            amount=len(returned),
+            metadata={
+                "cards_returned": len(returned),
+                "cards_drawn": drawn,
+            },
+        )
         self.log(f"{player.name} 完成 Mulligan：更換 {len(returned)} 張，抽回 {drawn} 張。")
 
         if all(self.mulligan_done):
@@ -210,6 +229,72 @@ class Game:
                 metadata={"reason": reason},
             )
         return drawn
+
+    def _record_damage(
+        self,
+        event_type: str,
+        *,
+        player_index: int,
+        card_id: str,
+        source_id: str,
+        target: TargetRef,
+        amount: int,
+        requested_amount: int,
+        source_type: str,
+        blocked: int = 0,
+        metadata: dict | None = None,
+    ) -> None:
+        details = {
+            "source_type": source_type,
+            "requested_amount": max(0, requested_amount),
+            "blocked": max(0, blocked),
+        }
+        if metadata:
+            details.update(metadata)
+        self.telemetry.record(
+            event_type,
+            turn=self.turn_number,
+            active_player=self.active_player_index,
+            player_index=player_index,
+            card_id=card_id,
+            source_id=source_id,
+            target=target,
+            amount=max(0, amount),
+            metadata=details,
+        )
+
+    def _record_heal(
+        self,
+        *,
+        player_index: int,
+        card_id: str,
+        source_id: str,
+        target: TargetRef,
+        amount: int,
+        requested_amount: int,
+        source_type: str,
+        metadata: dict | None = None,
+    ) -> None:
+        requested = max(0, requested_amount)
+        actual = max(0, amount)
+        details = {
+            "source_type": source_type,
+            "requested_amount": requested,
+            "overheal": max(0, requested - actual),
+        }
+        if metadata:
+            details.update(metadata)
+        self.telemetry.record(
+            "heal",
+            turn=self.turn_number,
+            active_player=self.active_player_index,
+            player_index=player_index,
+            card_id=card_id,
+            source_id=source_id,
+            target=target,
+            amount=actual,
+            metadata=details,
+        )
 
     def _declare_deck_out_loss(self, player_index: int, *, reason: str) -> None:
         if self.winner_index is not None:
@@ -619,6 +704,15 @@ class Game:
         if damage_dealt <= 0 or not attacker.has_keyword("吸血"):
             return 0
         healed = attacker.heal(damage_dealt)
+        self._record_heal(
+            player_index=attacker.owner_index,
+            card_id=attacker.card_id,
+            source_id=attacker.instance_id,
+            target=TargetRef("unit", attacker.owner_index, attacker.instance_id),
+            amount=healed,
+            requested_amount=damage_dealt,
+            source_type="lifesteal",
+        )
         if healed > 0:
             self.log(f"〖吸血〗：{attacker.card_id} {attacker.name} 回復 {healed} 點生命。")
         else:
@@ -682,9 +776,20 @@ class Game:
         attacker.attacks_made += 1
 
         if defender.kind == "leader":
-            amount = min(attacker.attack, self.players[defender.player_index].leader_health)
+            requested = attacker.attack
+            amount = min(requested, self.players[defender.player_index].leader_health)
             self.players[defender.player_index].leader_health -= amount
             attacker.total_damage_dealt += amount
+            self._record_damage(
+                "combat_damage_leader",
+                player_index=attacker.owner_index,
+                card_id=attacker.card_id,
+                source_id=attacker.instance_id,
+                target=defender,
+                amount=amount,
+                requested_amount=requested,
+                source_type="combat",
+            )
             self.log(f"{attacker.card_id} 對 {self.players[defender.player_index].leader.name} 造成 {amount} 點戰鬥傷害。")
             self._apply_lifesteal(attacker, amount)
         else:
@@ -701,6 +806,30 @@ class Game:
             dealt_to_attacker, blocked_by_attacker = self._combat_damage_to_unit(attacker, defender_raw)
             attacker.total_damage_dealt += dealt_to_target
             target.total_damage_dealt += dealt_to_attacker
+            self._record_damage(
+                "combat_damage_unit",
+                player_index=attacker.owner_index,
+                card_id=attacker.card_id,
+                source_id=attacker.instance_id,
+                target=defender,
+                amount=dealt_to_target,
+                requested_amount=attacker_raw,
+                source_type="combat",
+                blocked=blocked_by_target,
+                metadata={"combat_role": "attacker"},
+            )
+            self._record_damage(
+                "combat_damage_unit",
+                player_index=target.owner_index,
+                card_id=target.card_id,
+                source_id=target.instance_id,
+                target=TargetRef("unit", attacker.owner_index, attacker.instance_id),
+                amount=dealt_to_attacker,
+                requested_amount=defender_raw,
+                source_type="combat",
+                blocked=blocked_by_attacker,
+                metadata={"combat_role": "defender"},
+            )
 
             detail = f"{attacker.card_id} ↔ {target.card_id}：造成 {dealt_to_target} / {dealt_to_attacker} 點戰鬥傷害。"
             self.log(detail)
@@ -779,9 +908,19 @@ class Game:
         self.log(f"{unit.card_id} {unit.name} 達成翻面條件，翻至反面。")
         self.telemetry.record("transform", turn=self.turn_number, active_player=self.active_player_index, player_index=owner_index, card_id=unit.card_id, source_id=unit.instance_id)
         if max_increase > 0:
+            healed = unit.current_health - before_health
+            self._record_heal(
+                player_index=owner_index,
+                card_id=unit.card_id,
+                source_id=unit.instance_id,
+                target=TargetRef("unit", owner_index, unit.instance_id),
+                amount=healed,
+                requested_amount=max_increase,
+                source_type="transform_max_health_sync",
+            )
             self.log(
                 f"{unit.card_id} 翻面使最大生命值增加 {max_increase}，"
-                f"同步回復 {unit.current_health - before_health} 點現有生命。"
+                f"同步回復 {healed} 點現有生命。"
             )
         self._queue_trigger(unit, "on_flip", owner_index=owner_index)
 
@@ -923,12 +1062,22 @@ class Game:
                     healed = target.heal(effect.value) if target else 0
                 if source is not None and healed > 0:
                     source.heal_count += 1
+                self._record_heal(
+                    player_index=queued.source_player_index,
+                    card_id=effect.card_id,
+                    source_id=queued.source_id,
+                    target=ref,
+                    amount=healed,
+                    requested_amount=effect.value,
+                    source_type="effect",
+                    metadata={"effect_id": effect.effect_id},
+                )
                 self.log(f"{effect.effect_id}: {self.describe_target(ref)} 回復 {healed} 點生命。")
             elif effect.operation == "damage":
                 if ref.kind == "leader":
                     p = self.players[ref.player_index]
-                    p.leader_health = max(0, p.leader_health - effect.value)
-                    dealt = effect.value
+                    dealt = min(p.leader_health, max(0, effect.value))
+                    p.leader_health -= dealt
                 else:
                     target = self.find_unit(ref.instance_id)
                     dealt = target.take_damage(effect.value) if target else 0
@@ -937,6 +1086,17 @@ class Game:
                     target_unit = self.find_unit(ref.instance_id) if ref.kind == "unit" else None
                     if target_unit is not None and target_unit.current_health <= 0:
                         source.kills += 1
+                self._record_damage(
+                    "effect_damage",
+                    player_index=queued.source_player_index,
+                    card_id=effect.card_id,
+                    source_id=queued.source_id,
+                    target=ref,
+                    amount=dealt,
+                    requested_amount=effect.value,
+                    source_type="effect",
+                    metadata={"effect_id": effect.effect_id},
+                )
                 self.log(f"{effect.effect_id}: 對 {self.describe_target(ref)} 造成 {dealt} 點傷害。")
             elif effect.operation in {"modify_attack", "modify_max_health"}:
                 target = self.find_unit(ref.instance_id)
@@ -958,6 +1118,16 @@ class Game:
                         target.timed_modifiers.append(TimedModifier(kind, effect.value, duration=effect.duration, source_player_index=queued.source_player_index))
                 self.log(f"{effect.effect_id}: {target.card_id} {kind} {effect.value:+d} ({effect.duration})。")
                 if kind == "max_health" and effect.value > 0:
+                    self._record_heal(
+                        player_index=queued.source_player_index,
+                        card_id=effect.card_id,
+                        source_id=queued.source_id,
+                        target=ref,
+                        amount=healed_with_max_hp,
+                        requested_amount=effect.value,
+                        source_type="max_health_sync",
+                        metadata={"effect_id": effect.effect_id},
+                    )
                     self.log(
                         f"{effect.effect_id}: 最大生命值增加同步使 {target.card_id} "
                         f"回復 {healed_with_max_hp} 點現有生命。"
@@ -1069,8 +1239,19 @@ class Game:
         for pidx, unit in deaths:
             player = self.players[pidx]
             if unit in player.battlefield:
+                target = TargetRef("unit", pidx, unit.instance_id)
                 player.battlefield.remove(unit)
                 player.graveyard.append(unit)
+                self.telemetry.record(
+                    "unit_died",
+                    turn=self.turn_number,
+                    active_player=self.active_player_index,
+                    player_index=pidx,
+                    card_id=unit.card_id,
+                    source_id=unit.instance_id,
+                    target=target,
+                    metadata={"side": unit.current_side},
+                )
                 self.log(f"{unit.card_id} {unit.name} 生命值歸零，離開戰場。")
 
         # Then queue all leave triggers in active-player/non-active-player order.
@@ -1106,6 +1287,17 @@ class Game:
         if dead:
             self.winner_index = 1 - dead[0]
             self.log(f"遊戲結束：{self.players[self.winner_index].name} 獲勝。")
+            self.telemetry.record(
+                "game_end",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=self.winner_index,
+                metadata={
+                    "winner_index": self.winner_index,
+                    "reason": "leader_health",
+                    "loser_indices": dead,
+                },
+            )
 
     def end_turn(self) -> tuple[bool, str]:
         if not self.game_started:

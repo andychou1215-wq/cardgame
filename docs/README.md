@@ -26,6 +26,8 @@
 
 測試流程、Scenario、Telemetry 與跨場統計文件請見 `playtesting/`。
 
+最新綜合報告：`playtesting/PostInstrumentationBalanceReport.md`。
+
 ## UI / UX
 
 Streamlit Prototype 與介面設計文件請見 `ui-ux/`。

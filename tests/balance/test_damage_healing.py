@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import pytest
 
-from src.playtest.damage_healing import analyze_damage_healing
+from src.playtest.damage_healing import analyze_damage_healing, render_report
 
 
 pytestmark = pytest.mark.balance
@@ -83,3 +83,24 @@ def test_healing_actual_requested_and_overheal():
     assert deck.loc["D001", "avg_overheal"] == pytest.approx(1)
     assert deck.loc["D001", "healing_efficiency"] == pytest.approx(2 / 3)
     assert deck.loc["D002", "avg_leader_healing"] == pytest.approx(2)
+
+
+def test_report_rejects_stale_runs_without_damage_or_heal_events():
+    summaries, _ = _data()
+    events = pd.DataFrame([
+        {
+            "game_id": "G1",
+            "event_type": "card_played",
+            "turn": 1,
+            "player_index": 0,
+            "target_kind": "",
+            "target_player_index": None,
+            "amount": None,
+            "metadata": "{}",
+        }
+    ])
+
+    report = render_report(analyze_damage_healing(summaries, events))
+
+    assert "No usable damage/heal telemetry found" in report
+    assert "before using this report for balance decisions" in report

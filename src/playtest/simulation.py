@@ -74,6 +74,19 @@ def describe_decision_state(game, actor):
     )
 
 
+def choose_bot_action(bot, game, actions):
+    """Choose through the configured policy instead of bypassing it.
+
+    Older simulation code sampled ``bot.rng`` directly, which made heuristic
+    pairings behave exactly like random pairings and invalidated policy-level
+    analysis.
+    """
+    chooser = getattr(bot, "choose_action", None)
+    if callable(chooser):
+        return chooser(game)
+    return bot.rng.choice(actions)
+
+
 def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
     bots = [bot0 or RandomBot(0), bot1 or RandomBot(1)]
     actions_taken = 0
@@ -103,7 +116,18 @@ def run_bot_game(game, bot0=None, bot1=None, max_actions=1000):
             continue
 
         stalled = 0
-        action = bots[actor].rng.choice(actions)
+        action = choose_bot_action(bots[actor], game, actions)
+        if action is None:
+            return SimulationResult(
+                0,
+                getattr(game.telemetry, "game_id", ""),
+                game.winner_index,
+                game.turn_number,
+                actions_taken,
+                "stalled",
+                "bot returned no action despite legal actions; "
+                + describe_decision_state(game, actor),
+            )
 
         # M3.7.3 — Count cards selected for play. The counter is simulation-local
         # so the core GameState does not need a balance-analysis-only field.

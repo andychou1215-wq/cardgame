@@ -4,6 +4,13 @@
 
 ## Unreleased
 
+### Telemetry
+- 補齊初始手牌、Mulligan、戰鬥／效果傷害、治療、單位死亡與對局結束事件。
+- 傷害與治療統一記錄實際值、請求值、格擋量與溢補量。
+- 區分效果、吸血、最大生命同步與 Transform 最大生命同步治療來源。
+- 新增端到端量測覆蓋，確認事件可直接供 M3.7.5 分析器使用。
+- 修正模擬器略過 Bot 策略的問題，讓 heuristic／random 配對使用實際策略選擇。
+
 ### Repository Cleanup v1.1
 - 將 milestone / hotfix 說明文件移至 `archive/notes/`。
 - 測試依 unit / integration / scenarios 重新分類。
