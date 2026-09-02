@@ -17,8 +17,8 @@ E015,U009,back,1,triggered,on_flip,,self,1,,false,add_keyword,1,庇護,until_opp
 E016,U010,front,1,activated,manual,,other_ally_unit,1,zone:battlefield;controller:self;type:unit;exclude:self,true,heal,1,,instant,1,per_turn,1,false,continue,一回合一次，消耗1魔力值，指定我方一個其他單位治療1點現有生命值。
 E017,U010,back,1,activated,manual,,other_ally_unit,1,zone:battlefield;controller:self;type:unit;exclude:self,true,heal,1,,instant,0,per_turn,1,false,continue,一回合一次，指定我方一個其他單位治療1點現有生命值。
 E018,U011,back,1,triggered,on_flip,,other_ally_unit,1,zone:battlefield;controller:self;type:unit;exclude:self,true,add_keyword,1,庇護,permanent,0,,,false,continue,翻面時: 指定我方一個其他單位獲得永久〖庇護〗。
-E019,U012,front,1,triggered,on_enter,,all_other_ally_units,all,zone:battlefield;controller:self;type:unit;exclude:self,false,modify_attack,1,,permanent,0,,,false,continue,登場時: 使我方戰場上全部的其他單位卡攻擊力永久+1。
-E020,U012,front,2,triggered,on_enter,,all_other_ally_units,all,zone:battlefield;controller:self;type:unit;exclude:self,false,modify_max_health,1,,permanent,0,,,false,continue,登場時: 使我方戰場上全部的其他單位卡最大生命值永久+1。
+E019,U012,front,1,triggered,on_enter,,all_other_ally_units,all,zone:battlefield;controller:self;type:unit;exclude:self,false,modify_attack,1,,until_turn_end,0,,,false,continue,登場時: 使我方戰場上全部的其他單位卡攻擊力+1到本回合結束。
+E020,U012,front,2,triggered,on_enter,,all_other_ally_units,all,zone:battlefield;controller:self;type:unit;exclude:self,false,modify_max_health,1,,until_turn_end,0,,,false,continue,登場時: 使我方戰場上全部的其他單位卡最大生命值+1到本回合結束。
 E021,U012,back,1,triggered,on_flip,,all_other_ally_units,all,zone:battlefield;controller:self;type:unit;exclude:self,false,modify_attack,1,,permanent,0,,,false,continue,翻面時: 使我方戰場上全部的其他單位卡攻擊力永久+1。
 E022,U012,back,2,triggered,on_flip,,all_other_ally_units,all,zone:battlefield;controller:self;type:unit;exclude:self,false,modify_max_health,1,,permanent,0,,,false,continue,翻面時: 使我方戰場上全部的其他單位卡最大生命值永久+1。
 E023,U013,back,1,triggered,on_flip,,self_leader,1,,false,heal,4,,instant,0,,,false,continue,翻面時: 治療我方領袖4點生命值。

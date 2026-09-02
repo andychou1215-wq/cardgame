@@ -26,7 +26,9 @@
 
 測試流程、Scenario、Telemetry 與跨場統計文件請見 `playtesting/`。
 
-最新綜合報告：`playtesting/PostInstrumentationBalanceReport.md`。
+最新平衡測試：`playtesting/U012FrontTemporaryBuffBalanceReport.md`。
+
+完整基準報告：`playtesting/PostInstrumentationBalanceReport.md`。
 
 ## UI / UX
 
