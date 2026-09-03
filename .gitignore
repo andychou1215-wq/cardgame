@@ -12,6 +12,7 @@ Thumbs.db
 # Playtest generated
 playtest_data/replays/*.json
 playtest_data/raw/event_log.csv
+playtest_data/human_feedback/*.csv
 
 # Repo cleanup / Python local output
 repo_cleanup_report.json

@@ -1,11 +1,15 @@
-# 卡牌對決 Streamlit Prototype v5
+# 卡牌對決 Streamlit Prototype v6
 
-本版本加入 Mulligan、正式〖庇護〗攻擊限制，並保留 Combat、Transform、effects.csv Resolver。
+本版本新增玩家對 Heuristic AI 與局後好玩度問卷，並保留 Hot-seat、Combat、Transform、effects.csv Resolver。
 現有遊戲不使用 Apocalypse 系統，因此 Prototype 不包含任何 Apocalypse 流程或入口。
 
 ## 已支援
 
 - 兩副牌組載入與 Hot-seat 1v1
+- 玩家操作 Player 1 對戰 Heuristic AI
+- AI 自動 Mulligan、主回合、效果目標、Response Priority 與戰鬥結算
+- 固定玩家視角，不顯示 AI 手牌內容
+- 局後 7 項好玩度評分與文字備註
 - 起手 5 張
 - Mulligan：每位玩家一次，可更換任意張；退回牌組、洗牌、抽回等量
 - 雙方 Mulligan 完成後隨機決定先手
@@ -20,6 +24,24 @@
 - effects.csv Resolver
 - duration：instant / permanent / until_turn_end / until_attack_end / until_opponent_turn_end
 - Game Log
+
+## 玩家 vs Heuristic AI
+
+1. 在「新對局設定」選擇「玩家 vs Heuristic AI」。
+2. 選擇玩家與 AI 牌組後按「開始 / 重開」。
+3. 玩家完成 Mulligan；AI 自動保留自己的起手牌。
+4. AI 只在決策權屬於 AI 時行動。玩家主回合、玩家效果選擇或玩家取得 Response Priority 時，介面會停下等待操作。
+5. 對局結束後填寫好玩度問卷；每局只能保存一次。
+
+問卷記錄：決策深度、U011 8 費手感、U011 回報、暫時【庇護】清楚度、公平感、再玩意願、整體好玩度，以及選填文字備註。系統也會自動記錄玩家該局抽到、打出及翻面 U011 的次數。
+
+結果保存在：
+
+```text
+playtest_data/human_feedback/fun_ratings.csv
+```
+
+這是本機 Playtest 資料，預設不納入 Git。
 
 ## 執行
 
@@ -37,7 +59,7 @@ python -m streamlit run apps/battle_app.py
 .\.venv\Scripts\python.exe -m streamlit run apps/battle_app.py
 ```
 
-## Mulligan 規則（Prototype v5）
+## Mulligan 規則（Prototype v6）
 
 1. 雙方各抽 5 張起手牌。
 2. Player 1 先進行 Mulligan，之後 Player 2。

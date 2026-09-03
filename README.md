@@ -19,7 +19,8 @@
 - `effects.csv` 驅動的卡牌效果結算
 - 同批死亡與 `on_leave` 觸發時序
 - 勝負判定
-- Streamlit Hot-seat 雙人測試介面
+- Streamlit Hot-seat 雙人與玩家對 Heuristic AI 測試介面
+- 玩家對 AI 對局結束後的 7 項好玩度問卷與本機 CSV 紀錄
 
 目前不使用 Apocalypse 系統。
 
@@ -172,6 +173,8 @@ python -m streamlit run apps/battle_app.py
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m streamlit run apps/battle_app.py
 ```
+
+啟動後可選擇「雙人 Hot-seat」或「玩家 vs Heuristic AI」。AI 模式固定由玩家操作 Player 1；Heuristic AI 會自動完成自己的 Mulligan、主回合、效果目標與 Response Priority。對局結束後可填寫 1～5 分好玩度問卷，結果保存在 `playtest_data/human_feedback/fun_ratings.csv`。
 
 ## 測試
 

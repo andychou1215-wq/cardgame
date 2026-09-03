@@ -153,12 +153,13 @@ def activated_controls(game: Game) -> None:
                 st.rerun()
 
 
-def artifact_row(game: Game) -> None:
-    if not game.active_player.artifacts:
+def artifact_row(game: Game, player: PlayerState | None = None) -> None:
+    player = player or game.active_player
+    if not player.artifacts:
         return
     st.markdown("### Artifacts")
-    cols = st.columns(min(4, len(game.active_player.artifacts)))
-    for i, card in enumerate(game.active_player.artifacts):
+    cols = st.columns(min(4, len(player.artifacts)))
+    for i, card in enumerate(player.artifacts):
         with cols[i % len(cols)]:
             st.markdown(card_html(card), unsafe_allow_html=True)
 
@@ -248,14 +249,17 @@ def sidebar(game: Game) -> None:
             st.write(line)
 
 
-def mulligan_panel(game: Game) -> None:
+def mulligan_panel(game: Game, *, hot_seat: bool = True) -> None:
     """Hot-seat Mulligan: each player may replace any number of opening cards once."""
     pidx = game.mulligan_player_index
     player = game.players[pidx]
     st.info(
         f"Mulligan — {player.name}: 可選擇任意張起手牌退回牌組，洗牌後抽回等量。每位玩家僅一次。"
     )
-    st.caption("Hot-seat：請只讓目前玩家查看此區域，完成後將裝置交給下一位玩家。")
+    if hot_seat:
+        st.caption("Hot-seat：請只讓目前玩家查看此區域，完成後將裝置交給下一位玩家。")
+    else:
+        st.caption("AI 會自動保留起手牌；你確認 Mulligan 後將立即開始對局。")
     choices = st.multiselect(
         "選擇要更換的卡（可不選，直接保留全部）",
         options=player.hand,

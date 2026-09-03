@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### Player vs AI Playtest
+- Streamlit Prototype 新增玩家對 Heuristic AI 模式；AI 自動處理 Mulligan、主回合、效果目標、Response Priority 與戰鬥結算。
+- AI 模式採固定玩家視角並隱藏 AI 手牌內容，決策權回到玩家時立即停止自動推進。
+- 新增局後 7 項好玩度問卷、U011 曝光統計與本機 CSV 保存；每局僅能提交一次。
+
 ### Balance
 - 以 1,000 組、2,000 場 Heuristic/Heuristic 鏡像測試複驗 U011 費用 8；D001 勝率為 51.2%，鏡像組層級 95% 信賴區間為 49.2%–53.2%。
 - U011「遺跡石像」費用由 7 提高至 8；400 場鏡像測試中，同策略 D001 勝率由 79.5% 降至 72.5%，Heuristic/Heuristic 由 69% 降至 55%。
