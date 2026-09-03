@@ -1,0 +1,88 @@
+{
+  "method": {
+    "date": "2026-09-03",
+    "seed": 20260902,
+    "mirror_groups_per_pairing": 50,
+    "games": 400,
+    "max_actions": 1000,
+    "baseline": "u012_transform_shelter_requirement_20260903",
+    "changed_variable": "U011 E018 duration: permanent -> until_opponent_turn_end"
+  },
+  "validation": {
+    "targeted_tests_passed": 8,
+    "full_tests_passed": 111
+  },
+  "overall": {
+    "finished": 400,
+    "p1_wins": 204,
+    "p1_win_rate": 0.51,
+    "avg_turns": 10.3925,
+    "avg_actions": 150.95,
+    "stalled": 0,
+    "invalid_legal_action": 0,
+    "action_limit": 0,
+    "d001_wins": 270,
+    "d001_win_rate": 0.675
+  },
+  "same_policy": {
+    "baseline_d001_wins": 159,
+    "candidate_d001_wins": 159,
+    "games": 200,
+    "baseline_d001_win_rate": 0.795,
+    "candidate_d001_win_rate": 0.795,
+    "candidate_wilson_95": [0.7337430194757748, 0.8451382379616379]
+  },
+  "pairings": {
+    "heuristic_vs_heuristic": {"baseline_d001_wins": 69, "candidate_d001_wins": 69, "games": 100},
+    "heuristic_vs_random": {"baseline_d001_wins": 54, "candidate_d001_wins": 55, "games": 100},
+    "random_vs_heuristic": {"baseline_d001_wins": 56, "candidate_d001_wins": 56, "games": 100},
+    "random_vs_random": {"baseline_d001_wins": 90, "candidate_d001_wins": 90, "games": 100}
+  },
+  "paired_comparison": {
+    "matched_games": 400,
+    "d001_to_d001": 267,
+    "d001_to_d002": 2,
+    "d002_to_d001": 3,
+    "d002_to_d002": 128,
+    "winner_changed": 5,
+    "turn_count_changed": 23,
+    "action_count_changed": 52
+  },
+  "u011_candidate": {
+    "played_instances": 345,
+    "games_played": 258,
+    "transformed_instances": 233,
+    "games_transformed": 191,
+    "transform_rate_per_play": 0.6753623188405797,
+    "avg_transform_turn": 9.253218884120171,
+    "d001_wins_when_transformed": 143,
+    "d001_win_rate_when_transformed": 0.7486910994764397
+  },
+  "candidate_deck_metrics": {
+    "D001": {
+      "avg_combat_damage_leader": 14.77,
+      "avg_combat_damage_unit": 25.7825,
+      "avg_effect_damage": 0.3925,
+      "avg_total_healing": 4.5875,
+      "avg_max_health_sync_healing": 4.1275,
+      "board_snapshots": 3769,
+      "avg_unit_count": 1.8695,
+      "avg_board_attack": 4.7986,
+      "avg_board_health": 6.1573
+    },
+    "D002": {
+      "avg_combat_damage_leader": 12.1975,
+      "avg_combat_damage_unit": 20.92,
+      "avg_effect_damage": 3.7625,
+      "avg_total_healing": 7.375,
+      "avg_max_health_sync_healing": 3.355,
+      "board_snapshots": 3731,
+      "avg_unit_count": 2.1844,
+      "avg_board_attack": 3.8328,
+      "avg_board_health": 6.2391
+    }
+  },
+  "telemetry_limitations": [
+    "add_keyword resolution currently has no dedicated effect-applied telemetry, so successful E018 target coverage cannot be measured directly"
+  ]
+}

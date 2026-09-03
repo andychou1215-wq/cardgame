@@ -136,6 +136,42 @@ def test_until_turn_end_group_stats_expire_together(tmp_path: Path):
     assert ally.current_health == health_before
 
 
+def test_u011_back_grants_shelter_until_opponent_turn_end():
+    root = Path(__file__).resolve().parents[2]
+    data = GameData(root)
+    game = Game(data, "D001", "D002", seed=16)
+    start_game(game)
+    game.active_player_index = 0
+
+    source = next(card for card in data.build_deck("D001") if card.card_id == "U011")
+    ally = next(card for card in data.build_deck("D001") if card.card_id == "U001")
+    for unit in (source, ally):
+        unit.owner_index = 0
+        unit.entered_turn = 0
+    source.current_side = "back"
+    game.players[0].battlefield = [source, ally]
+
+    effect = data.effects_for("U011", "on_flip", "back")[0]
+    assert effect.effect_id == "E018"
+    assert effect.target == "other_ally_unit"
+    assert effect.parameter == "庇護"
+    assert effect.duration == "until_opponent_turn_end"
+
+    target = TargetRef("unit", 0, ally.instance_id)
+    game._resolve_effect(QueuedEffect(effect, source.instance_id, 0), target)
+
+    assert ally.has_keyword("庇護")
+    assert "庇護" not in ally.permanent_keywords
+    assert source.has_keyword("庇護")
+
+    assert game.end_turn()[0]
+    assert ally.has_keyword("庇護")
+
+    assert game.end_turn()[0]
+    assert not ally.has_keyword("庇護")
+    assert source.has_keyword("庇護")
+
+
 def test_u012_front_effect_data_expires_at_turn_end():
     root = Path(__file__).resolve().parents[2]
     data = GameData(root)
