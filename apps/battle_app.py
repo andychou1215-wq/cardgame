@@ -220,7 +220,6 @@ with st.expander("Prototype 規則假設 / 已知限制"):
 - 死亡／觸發時序：同批致死單位先同時離場，再依主動玩家 → 非主動玩家順序排入 `on_leave`，之後才繼續效果與 Transform 檢查。
 - Mulligan：雙方各抽 5 張起手牌；每位玩家可一次選擇任意張退回牌組，洗牌後抽回等量；雙方完成後隨機決定先手並開始第一回合。
 - Apocalypse 系統不納入本遊戲與此 Prototype。
-- Artifact durability 尚未消耗；目前先支援 Artifact 進場與 activated effect。
 - `until_turn_end`、`until_attack_end`、`until_opponent_turn_end` 已支援效果到期。
         """
     )

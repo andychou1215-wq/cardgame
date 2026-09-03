@@ -43,6 +43,11 @@ class TimedModifier:
 class CardInstance:
     definition: CardDefinition
     instance_id: str = field(default_factory=lambda: uuid4().hex[:10])
+    current_durability: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.card_type == "artifact" and self.current_durability is None:
+            self.current_durability = max(0, self.definition.durability)
 
     @property
     def card_id(self) -> str:
@@ -86,6 +91,7 @@ class UnitInstance(CardInstance):
     health: int | None = None
 
     def __post_init__(self) -> None:
+        super().__post_init__()
         if self.health is None:
             self.health = self.max_health
 

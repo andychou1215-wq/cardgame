@@ -39,6 +39,12 @@ def card_html(card: CardInstance, *, hide_details: bool = False) -> str:
         side_text = card.side_definition.effect_text
         pieces = [p for p in [kw, side_text, text] if p]
         text = "<br>".join(html.escape(p) for p in pieces)
+    elif card.card_type == "artifact":
+        current = card.current_durability
+        if current is None:
+            current = max(0, d.durability)
+        stats = f'<div class="stat-line">耐久度 {current}/{d.durability}</div>'
+        text = html.escape(text)
     else:
         text = html.escape(text)
     return (

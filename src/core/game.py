@@ -179,6 +179,7 @@ class Game:
             unit.attacks_this_turn = 0
             if unit.entered_turn < self.turn_number:
                 unit.survived_turns += 1
+        self._decay_active_player_artifacts()
         player.max_mana = min(MAX_MANA, player.max_mana + 1)
         player.mana = player.max_mana
         if not initial:
@@ -189,6 +190,53 @@ class Game:
         else:
             self.log(f"{player.name} 先手，魔力 {player.mana}/{player.max_mana}。")
         self.check_transforms()
+
+    def _decay_active_player_artifacts(self) -> None:
+        """Reduce the active player's artifacts by one durability and destroy expired ones."""
+        player = self.active_player
+        destroyed: list[CardInstance] = []
+        for artifact in list(player.artifacts):
+            before = artifact.current_durability
+            if before is None:
+                before = max(0, artifact.definition.durability)
+            artifact.current_durability = max(0, before - 1)
+            self.telemetry.record(
+                "artifact_durability_changed",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=self.active_player_index,
+                card_id=artifact.card_id,
+                source_id=artifact.instance_id,
+                amount=-1,
+                metadata={
+                    "before": before,
+                    "after": artifact.current_durability,
+                },
+            )
+            self.log(
+                f"{artifact.card_id} {artifact.name} 耐久度降至 "
+                f"{artifact.current_durability}/{artifact.definition.durability}。"
+            )
+            if artifact.current_durability == 0:
+                destroyed.append(artifact)
+
+        for artifact in destroyed:
+            player.artifacts.remove(artifact)
+            player.graveyard.append(artifact)
+            self.telemetry.record(
+                "artifact_destroyed",
+                turn=self.turn_number,
+                active_player=self.active_player_index,
+                player_index=self.active_player_index,
+                card_id=artifact.card_id,
+                source_id=artifact.instance_id,
+                metadata={"reason": "durability"},
+            )
+            self.log(f"{artifact.card_id} {artifact.name} 耐久度歸零並被摧毀。")
+            self._queue_trigger(artifact, "on_leave", owner_index=self.active_player_index)
+
+        if destroyed:
+            self.process_effect_queue()
 
     def _draw_cards(
         self,
@@ -398,6 +446,8 @@ class Game:
             self.enqueue_trigger(played, "on_enter")
             self.check_transforms()
         elif played.card_type == "artifact":
+            if played.current_durability is None:
+                played.current_durability = max(0, played.definition.durability)
             player.artifacts.append(played)
         elif played.card_type == "spell":
             self._enqueue_card_effects(played, "on_play", selected_target=target)
