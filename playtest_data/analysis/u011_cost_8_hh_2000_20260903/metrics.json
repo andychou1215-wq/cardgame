@@ -1,0 +1,49 @@
+{
+  "method": {
+    "date": "2026-09-03",
+    "card_version": "U011 cost 8 with temporary shelter",
+    "pairing": "heuristic_vs_heuristic",
+    "seed": 20560911,
+    "mirror_groups": 1000,
+    "games": 2000,
+    "max_actions": 1000
+  },
+  "stability": {
+    "finished": 2000,
+    "finish_rate": 1.0,
+    "stalled": 0,
+    "invalid_legal_action": 0,
+    "action_limit": 0,
+    "avg_turns": 10.597,
+    "avg_actions": 173.357
+  },
+  "result": {
+    "d001_wins": 1024,
+    "d002_wins": 976,
+    "d001_win_rate": 0.512,
+    "game_level_wilson_95": [0.4900912399118564, 0.5338627509533935],
+    "mirror_group_cluster_95": [0.49248278816988394, 0.531517211830116]
+  },
+  "seat": {
+    "p1_wins": 984,
+    "p1_win_rate": 0.492,
+    "d001_as_p1_wins": 504,
+    "d001_as_p1_win_rate": 0.504,
+    "d001_as_p2_wins": 520,
+    "d001_as_p2_win_rate": 0.52
+  },
+  "mirror_group_outcomes": {
+    "d001_sweeps": 210,
+    "split_pairs": 604,
+    "d002_sweeps": 186
+  },
+  "pilot_reproduction": {
+    "prior_games": 100,
+    "prior_d001_wins": 55,
+    "prior_d001_win_rate": 0.55,
+    "first_100_rows_exact_match": true,
+    "additional_games": 1900,
+    "additional_d001_wins": 969,
+    "additional_d001_win_rate": 0.51
+  }
+}
