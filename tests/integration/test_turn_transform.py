@@ -147,6 +147,39 @@ def test_u012_front_effect_data_expires_at_turn_end():
     assert all("到本回合結束" in effect.effect_text for effect in effects)
 
 
+def test_u012_transform_requires_three_units_and_one_with_shelter():
+    root = Path(__file__).resolve().parents[2]
+    data = GameData(root)
+    game = Game(data, "D001", "D002", seed=15)
+    start_game(game)
+    game.active_player_index = 0
+
+    source = next(card for card in data.build_deck("D001") if card.card_id == "U012")
+    sheltered = next(card for card in data.build_deck("D001") if card.card_id == "U001")
+    normal = next(card for card in data.build_deck("D001") if card.card_id == "U002")
+    for unit in (source, sheltered, normal):
+        unit.owner_index = 0
+        unit.entered_turn = 0
+
+    assert source.definition.transform_condition_target == "ally_units;keyword:庇護"
+    assert source.definition.transform_condition_text == (
+        "我方戰場上至少共有3個單位，且其中一個單位擁有【庇護】效果時翻至反面。"
+    )
+
+    game.players[0].battlefield = [source, sheltered]
+    assert not game.check_transforms()
+    assert source.current_side == "front"
+
+    sheltered.permanent_keywords.discard("庇護")
+    game.players[0].battlefield.append(normal)
+    assert not game.check_transforms()
+    assert source.current_side == "front"
+
+    sheltered.permanent_keywords.add("庇護")
+    assert game.check_transforms()
+    assert source.current_side == "back"
+
+
 def test_u012_back_shelter_extends_same_buff_without_stacking():
     root = Path(__file__).resolve().parents[2]
     data = GameData(root)

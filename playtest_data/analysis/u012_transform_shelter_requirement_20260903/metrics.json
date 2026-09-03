@@ -1,0 +1,167 @@
+{
+  "method": {
+    "date": "2026-09-03",
+    "seed": 20260902,
+    "mirror_groups_per_pairing": 50,
+    "games": 400,
+    "max_actions": 1000
+  },
+  "overall": {
+    "games": 400,
+    "finished": 400,
+    "finish_rate": 1.0,
+    "p1_wins": 203,
+    "p2_wins": 197,
+    "p1_win_rate": 0.5075,
+    "avg_turns": 10.3925,
+    "avg_actions": 150.7425,
+    "stalled": 0,
+    "invalid_legal_action": 0,
+    "action_limit": 0
+  },
+  "pairings": {
+    "heuristic_vs_heuristic": {
+      "games": 100,
+      "d001_wins": 69,
+      "d001_win_rate": 0.69,
+      "p1_wins": 51,
+      "p1_win_rate": 0.51,
+      "avg_turns": 10.89,
+      "avg_actions": 181.19
+    },
+    "heuristic_vs_random": {
+      "games": 100,
+      "d001_wins": 54,
+      "d001_win_rate": 0.54,
+      "p1_wins": 96,
+      "p1_win_rate": 0.96,
+      "avg_turns": 9.24,
+      "avg_actions": 131.65
+    },
+    "random_vs_heuristic": {
+      "games": 100,
+      "d001_wins": 56,
+      "d001_win_rate": 0.56,
+      "p1_wins": 6,
+      "p1_win_rate": 0.06,
+      "avg_turns": 8.6,
+      "avg_actions": 125.77
+    },
+    "random_vs_random": {
+      "games": 100,
+      "d001_wins": 90,
+      "d001_win_rate": 0.9,
+      "p1_wins": 50,
+      "p1_win_rate": 0.5,
+      "avg_turns": 12.84,
+      "avg_actions": 164.36
+    }
+  },
+  "same_policy": {
+    "games": 200,
+    "d001_wins": 159,
+    "d001_win_rate": 0.795,
+    "wilson_95": [
+      0.7337430194757748,
+      0.8451382379616379
+    ]
+  },
+  "all_policy": {
+    "games": 400,
+    "d001_wins": 269,
+    "d001_win_rate": 0.6725
+  },
+  "cross_policy": {
+    "games": 200,
+    "heuristic_wins": 190,
+    "heuristic_win_rate": 0.95
+  },
+  "board": {
+    "D001": {
+      "snapshots": 3774,
+      "avg_unit_count": 1.859565447800742,
+      "avg_board_attack": 4.756226815050344,
+      "avg_board_health": 6.125596184419714,
+      "avg_survival_conversion": 0.4693309425858868,
+      "avg_unit_count_t1_3": 0.895644283121597,
+      "avg_board_attack_t1_3": 1.425589836660617,
+      "avg_board_health_t1_3": 1.9909255898366607
+    },
+    "D002": {
+      "snapshots": 3736,
+      "avg_unit_count": 2.184689507494647,
+      "avg_board_attack": 3.846359743040685,
+      "avg_board_health": 6.245449678800856,
+      "avg_survival_conversion": 0.47998807545526045,
+      "avg_unit_count_t1_3": 1.2468239564428312,
+      "avg_board_attack_t1_3": 1.5208711433756805,
+      "avg_board_health_t1_3": 2.232304900181488
+    }
+  },
+  "deck_game_metrics": {
+    "D001": {
+      "avg_combat_damage_leader": 14.625,
+      "avg_combat_damage_unit": 25.7475,
+      "avg_effect_damage": 0.37,
+      "avg_effect_damage_unit": 0.37,
+      "avg_max_health_sync_healing": 4.1625,
+      "avg_overheal": 0.0,
+      "avg_total_healing": 4.6225,
+      "avg_unit_healing": 4.6225,
+      "avg_total_damage": 40.7425,
+      "avg_total_leader_damage": 14.625,
+      "avg_net_leader_pressure": 14.625
+    },
+    "D002": {
+      "avg_combat_damage_leader": 12.275,
+      "avg_combat_damage_unit": 20.9475,
+      "avg_effect_damage": 3.745,
+      "avg_effect_damage_unit": 3.745,
+      "avg_leader_healing": 1.69,
+      "avg_max_health_sync_healing": 3.3725,
+      "avg_overheal": 0.185,
+      "avg_total_healing": 7.4575,
+      "avg_unit_healing": 5.7675,
+      "avg_total_damage": 36.9675,
+      "avg_total_leader_damage": 12.275,
+      "avg_net_leader_pressure": 10.585
+    }
+  },
+  "u012": {
+    "played_instances": 361,
+    "games_played": 273,
+    "transformed_instances": 216,
+    "untransformed_instances": 145,
+    "games_transformed": 170,
+    "transform_rate_per_play": 0.5983379501385041,
+    "avg_transform_turn": 8.467592592592593,
+    "win_rate_when_transformed": 0.9398148148148148,
+    "extension_eligible_transforms": 213,
+    "extension_games": 168,
+    "effect_games": 225,
+    "extension_coverage_per_transform": 0.9861111111111112,
+    "extension_target_instances": 251,
+    "extension_targets_per_transform": 1.162037037037037,
+    "extension_targets_per_eligible_transform": 1.1784037558685445,
+    "extension_events": {
+      "E028": 251,
+      "E029": 251
+    },
+    "max_health_effect_applications": {
+      "E020": 570,
+      "E022": 558
+    },
+    "max_health_effect_actual_healing": {
+      "E020": 570,
+      "E022": 558
+    },
+    "extension_target_cards": {
+      "U004": 93,
+      "U011": 142,
+      "U006": 5,
+      "U002": 4,
+      "U012": 6,
+      "U003": 1
+    }
+  }
+}

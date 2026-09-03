@@ -1,0 +1,19 @@
+{
+  "baseline": "u012_back_shelter_extension_20260903",
+  "candidate": "u012_transform_shelter_requirement_20260903",
+  "matched_games": 400,
+  "winner_transition": {
+    "D001_to_D001": 269,
+    "D001_to_D002": 1,
+    "D002_to_D001": 0,
+    "D002_to_D002": 130
+  },
+  "same_policy_winner_transition": {
+    "D001_to_D001": 159,
+    "D001_to_D002": 1,
+    "D002_to_D001": 0,
+    "D002_to_D002": 40
+  },
+  "games_with_changed_turn_count": 36,
+  "games_with_changed_action_count": 65
+}

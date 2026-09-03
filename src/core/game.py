@@ -891,7 +891,12 @@ class Game:
         if t == "heal_count":
             return unit.heal_count >= value
         if t == "unit_count_at_least":
-            return len(self.players[owner_index].battlefield) >= value
+            units = self.players[owner_index].battlefield
+            if len(units) < value:
+                return False
+            filters = self._parse_filter(d.transform_condition_target)
+            keyword = filters.get("keyword")
+            return not keyword or any(candidate.has_keyword(keyword) for candidate in units)
         if t == "leader_health_at_or_below":
             return self.players[owner_index].leader_health <= value
         return False
