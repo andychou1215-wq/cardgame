@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-03",
+  "source_files": [
+    "playtest_data/analysis/m3_5_4b/attributed_all_cards.csv",
+    "playtest_data/analysis/m3_5_4b/unattributed_shared_cards.csv"
+  ],
+  "source_deck_baselines": {
+    "D001": 0.8925,
+    "D002": 0.1075
+  },
+  "distinct_cards": 19,
+  "attributable_cards": 18,
+  "unattributable_cards": [
+    "R001"
+  ],
+  "method": {
+    "base_score": "existing outlier_score = deck-relative win-rate delta * usage confidence * bounded usage weight",
+    "imbalance_pressure": "D001: outlier_score; D002: -outlier_score",
+    "interpretation": "Higher positive score means stronger evidence that the card reinforces the observed D001>D002 imbalance.",
+    "causal_warning": "Association-based triage only; not a causal card-power estimate."
+  },
+  "version_warning": "M3.5.4b historical snapshot predates recent U012 changes; U012 rank is stale until telemetry is regenerated."
+}
