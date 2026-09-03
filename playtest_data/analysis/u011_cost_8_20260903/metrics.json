@@ -1,0 +1,94 @@
+{
+  "method": {
+    "date": "2026-09-03",
+    "seed": 20260902,
+    "mirror_groups_per_pairing": 50,
+    "games": 400,
+    "max_actions": 1000,
+    "baseline": "u011_temporary_shelter_20260903",
+    "changed_variable": "U011 cost: 7 -> 8"
+  },
+  "validation": {
+    "targeted_tests_passed": 9,
+    "full_tests_passed": 112
+  },
+  "overall": {
+    "finished": 400,
+    "p1_wins": 198,
+    "p1_win_rate": 0.495,
+    "avg_turns": 10.3175,
+    "avg_actions": 149.1875,
+    "stalled": 0,
+    "invalid_legal_action": 0,
+    "action_limit": 0,
+    "d001_wins": 252,
+    "d001_win_rate": 0.63
+  },
+  "same_policy": {
+    "baseline_d001_wins": 159,
+    "candidate_d001_wins": 145,
+    "games": 200,
+    "baseline_d001_win_rate": 0.795,
+    "candidate_d001_win_rate": 0.725,
+    "baseline_wilson_95": [0.7337430194757748, 0.8451382379616379],
+    "candidate_wilson_95": [0.6593166064233035, 0.7822029967069265]
+  },
+  "pairings": {
+    "heuristic_vs_heuristic": {"baseline_d001_wins": 69, "candidate_d001_wins": 55, "games": 100},
+    "heuristic_vs_random": {"baseline_d001_wins": 55, "candidate_d001_wins": 54, "games": 100},
+    "random_vs_heuristic": {"baseline_d001_wins": 56, "candidate_d001_wins": 53, "games": 100},
+    "random_vs_random": {"baseline_d001_wins": 90, "candidate_d001_wins": 90, "games": 100}
+  },
+  "paired_comparison": {
+    "matched_games": 400,
+    "d001_to_d001": 246,
+    "d001_to_d002": 24,
+    "d002_to_d001": 6,
+    "d002_to_d002": 124,
+    "winner_changed": 30,
+    "turn_count_changed": 155,
+    "action_count_changed": 250,
+    "two_sided_exact_mcnemar_p": 0.001430906355381012
+  },
+  "u011": {
+    "baseline_played_instances": 345,
+    "candidate_played_instances": 285,
+    "baseline_games_played": 258,
+    "candidate_games_played": 218,
+    "candidate_avg_play_turn": 9.473684210526315,
+    "baseline_transformed_instances": 233,
+    "candidate_transformed_instances": 195,
+    "baseline_games_transformed": 191,
+    "candidate_games_transformed": 165,
+    "baseline_transform_rate_per_play": 0.6753623188405797,
+    "candidate_transform_rate_per_play": 0.6842105263157895,
+    "baseline_avg_transform_turn": 9.253218884120171,
+    "candidate_avg_transform_turn": 9.928205128205128,
+    "candidate_d001_wins_when_transformed": 125,
+    "candidate_d001_win_rate_when_transformed": 0.7575757575757576
+  },
+  "candidate_deck_metrics": {
+    "D001": {
+      "avg_combat_damage_leader": 13.8325,
+      "avg_combat_damage_unit": 24.5975,
+      "avg_effect_damage": 0.4025,
+      "avg_total_healing": 4.19,
+      "avg_max_health_sync_healing": 3.7475,
+      "board_snapshots": 3747,
+      "avg_unit_count": 1.8049,
+      "avg_board_attack": 4.5653,
+      "avg_board_health": 5.8554
+    },
+    "D002": {
+      "avg_combat_damage_leader": 13.18,
+      "avg_combat_damage_unit": 20.1875,
+      "avg_effect_damage": 3.7075,
+      "avg_total_healing": 7.58,
+      "avg_max_health_sync_healing": 3.4675,
+      "board_snapshots": 3697,
+      "avg_unit_count": 2.2372,
+      "avg_board_attack": 3.954,
+      "avg_board_health": 6.4698
+    }
+  }
+}

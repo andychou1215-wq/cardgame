@@ -172,6 +172,15 @@ def test_u011_back_grants_shelter_until_opponent_turn_end():
     assert source.has_keyword("庇護")
 
 
+def test_u011_cost_data_is_eight():
+    root = Path(__file__).resolve().parents[2]
+    data = GameData(root)
+
+    u011 = next(card for card in data.build_deck("D001") if card.card_id == "U011")
+
+    assert u011.cost == 8
+
+
 def test_u012_front_effect_data_expires_at_turn_end():
     root = Path(__file__).resolve().parents[2]
     data = GameData(root)
