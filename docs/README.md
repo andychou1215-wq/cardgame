@@ -30,6 +30,8 @@
 
 完整基準報告：`playtesting/PostInstrumentationBalanceReport.md`。
 
+陣營費用曲線與關鍵字缺口紀錄（待新卡設計參考）：`playtesting/FactionCurveGapFindings.md`。
+
 ## UI / UX
 
 Streamlit Prototype 與介面設計文件請見 `ui-ux/`。

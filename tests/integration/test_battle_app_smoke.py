@@ -2,6 +2,7 @@ from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
+from src.playtest.fun_feedback import card_exposure
 from src.playtest.simulation import decision_player_index
 
 
@@ -48,5 +49,18 @@ def test_battle_app_ai_mode_mulligan_yields_to_player_and_shows_questionnaire():
     app.run(timeout=10)
 
     assert not app.exception
-    assert len(app.slider) == 7
+    # The deck isn't shuffled with a fixed seed here, so whether the human
+    # actually drew/played/transformed U011 this game varies run to run.
+    # The three U011-specific sliders should be skipped whenever that
+    # particular moment wasn't encountered (rather than left at a
+    # meaningless default of 3), so derive the expected count from the
+    # game's own exposure instead of hard-coding it.
+    exposure = card_exposure(game, player_index=0, card_id="U011")
+    encountered = sum(
+        1
+        for count in (exposure["drawn"], exposure["played"], exposure["transformed"])
+        if count > 0
+    )
+    assert len(app.slider) == 4 + encountered
+    assert sum(1 for c in app.caption if "未接觸／不適用" in c.value) == 3 - encountered
     assert app.text_area[0].label == "補充觀察（選填）"

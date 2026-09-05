@@ -50,13 +50,56 @@ class HeuristicBot:
             return None
 
         action_count = len(actions)
+        lethal_targets = self._lethal_targets(game, actions)
         scored = [
-            (self.score_action(game, action, action_count=action_count), action)
+            (
+                self.score_action(
+                    game,
+                    action,
+                    action_count=action_count,
+                    lethal_targets=lethal_targets,
+                ),
+                action,
+            )
             for action in actions
         ]
         best_score = max(score for score, _ in scored)
         best = [action for score, action in scored if score == best_score]
         return self.rng.choice(best)
+
+    def _lethal_targets(self, game, actions) -> set[int]:
+        """Enemy player indexes that this player can kill this turn by
+        attacking the leader with every currently-legal leader attack,
+        even if no single attacker's damage is lethal on its own.
+
+        Without this, the per-action scoring only recognizes lethal when
+        one attacker alone can finish the leader, so the bot can end up
+        preferring a favorable board trade over committing several
+        attackers to the face when together they would have won the game.
+        """
+        totals: dict[int, int] = {}
+        for action in actions:
+            if action.kind != DECLARE_ATTACK:
+                continue
+            if getattr(action.target, "kind", "") != "leader":
+                continue
+            attacker = _find_unit(game, action.source_id)
+            if attacker is None:
+                continue
+            target_player = getattr(
+                action.target,
+                "player_index",
+                1 - action.player_index,
+            )
+            totals[target_player] = totals.get(target_player, 0) + getattr(
+                attacker, "attack", 0
+            )
+
+        return {
+            target_player
+            for target_player, total_attack in totals.items()
+            if total_attack >= game.players[target_player].leader_health
+        }
 
     def act(self, game):
         action = self.choose_action(game)
@@ -70,6 +113,7 @@ class HeuristicBot:
         action,
         *,
         action_count: int | None = None,
+        lethal_targets: set[int] | None = None,
     ) -> float:
         w = self.weights
         player = game.players[action.player_index]
@@ -95,10 +139,15 @@ class HeuristicBot:
                     1 - action.player_index,
                 )
                 leader_hp = game.players[target_player].leader_health
-                if (
+                solo_lethal = (
                     attacker is not None
                     and getattr(attacker, "attack", 0) >= leader_hp
-                ):
+                )
+                combined_lethal = (
+                    lethal_targets is not None
+                    and target_player in lethal_targets
+                )
+                if solo_lethal or combined_lethal:
                     score += w.lethal_bonus
                 return score
 

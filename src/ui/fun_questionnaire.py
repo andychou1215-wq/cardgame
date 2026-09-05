@@ -24,6 +24,9 @@ def fun_questionnaire(game, human_player_index: int, output_path: str | Path) ->
     human = game.players[human_player_index]
     ai = game.players[1 - human_player_index]
     exposure = card_exposure(game, human_player_index, "U011")
+    drew_u011 = exposure["drawn"] > 0
+    played_u011 = exposure["played"] > 0
+    transformed_u011 = exposure["transformed"] > 0
 
     st.divider()
     st.markdown("## 🎯 局後好玩度問卷")
@@ -37,9 +40,37 @@ def fun_questionnaire(game, human_player_index: int, output_path: str | Path) ->
 
     with st.form(f"fun_feedback_form_{game_id}"):
         decision_depth = st.slider("每回合是否有值得思考的選擇？", 1, 5, 3)
-        u011_playability = st.slider("U011 的 8 費手感是否合理、不會過度卡手？", 1, 5, 3)
-        u011_payoff = st.slider("成功打出 U011 後，回報是否值得等待？", 1, 5, 3)
-        shelter_clarity = st.slider("暫時【庇護】是否清楚且有戰術價值？", 1, 5, 3)
+
+        # U011-specific questions only make sense if the human actually
+        # encountered that moment this game. Skipping them (instead of
+        # leaving a default 3) keeps players who never saw U011 from
+        # silently polluting the balance data with a meaningless middle score.
+        if drew_u011:
+            u011_playability = st.slider(
+                "U011 的 8 費手感是否合理、不會過度卡手？", 1, 5, 3
+            )
+        else:
+            u011_playability = None
+            st.caption("U011 手感：本局未抽到 U011，未接觸／不適用，不列入評分。")
+
+        if played_u011:
+            u011_payoff = st.slider(
+                "成功打出 U011 後，回報是否值得等待？", 1, 5, 3
+            )
+        else:
+            u011_payoff = None
+            st.caption("U011 回報：本局未打出 U011，未接觸／不適用，不列入評分。")
+
+        if transformed_u011:
+            shelter_clarity = st.slider(
+                "暫時【庇護】是否清楚且有戰術價值？", 1, 5, 3
+            )
+        else:
+            shelter_clarity = None
+            st.caption(
+                "暫時【庇護】：本局 U011 未翻面觸發，未接觸／不適用，不列入評分。"
+            )
+
         fairness = st.slider("本局勝負是否感覺公平？", 1, 5, 3)
         replay_desire = st.slider("你是否想立刻再玩一局？", 1, 5, 3)
         overall_fun = st.slider("整體好玩程度", 1, 5, 3)

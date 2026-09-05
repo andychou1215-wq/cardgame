@@ -16,6 +16,13 @@ RATING_FIELDS = (
     "overall_fun",
 )
 
+# These three ratings only make sense if the human actually saw the relevant
+# U011 moment this game (drew it / played it / triggered its transform). If
+# they never encountered it, the field should be left as None ("not
+# applicable") rather than a leftover default slider value, which would
+# otherwise silently pollute the balance data with meaningless 3s.
+OPTIONAL_RATING_FIELDS = ("u011_playability", "u011_payoff", "shelter_clarity")
+
 
 @dataclass(frozen=True)
 class FunFeedback:
@@ -28,9 +35,9 @@ class FunFeedback:
     turn_number: int
     human_won: bool
     decision_depth: int
-    u011_playability: int
-    u011_payoff: int
-    shelter_clarity: int
+    u011_playability: int | None
+    u011_payoff: int | None
+    shelter_clarity: int | None
     fairness: int
     replay_desire: int
     overall_fun: int
@@ -46,12 +53,22 @@ class FunFeedback:
             timezone.utc
         ).isoformat()
         row["human_won"] = str(self.human_won).lower()
+        # Write "not applicable" ratings as an empty CSV cell rather than
+        # Python's "None", so downstream analysis can treat them as missing
+        # data with a plain empty-string / NaN check instead of a magic string.
+        for field_name in OPTIONAL_RATING_FIELDS:
+            if row.get(field_name) is None:
+                row[field_name] = ""
         return row
 
 
 def validate_feedback(feedback: FunFeedback) -> None:
     for field_name in RATING_FIELDS:
         value = getattr(feedback, field_name)
+        if value is None:
+            if field_name in OPTIONAL_RATING_FIELDS:
+                continue
+            raise ValueError(f"{field_name} must be between 1 and 5")
         if not 1 <= value <= 5:
             raise ValueError(f"{field_name} must be between 1 and 5")
     if feedback.human_player_index not in (0, 1):

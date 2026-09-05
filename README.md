@@ -174,7 +174,7 @@ python -m streamlit run apps/battle_app.py
 .\.venv\Scripts\python.exe -m streamlit run apps/battle_app.py
 ```
 
-啟動後可選擇「雙人 Hot-seat」或「玩家 vs Heuristic AI」。AI 模式固定由玩家操作 Player 1；Heuristic AI 會自動完成自己的 Mulligan、主回合、效果目標與 Response Priority。對局結束後可填寫 1～5 分好玩度問卷，結果保存在 `playtest_data/human_feedback/fun_ratings.csv`。
+啟動後可選擇「雙人 Hot-seat」或「玩家 vs Heuristic AI」。AI 模式固定由玩家操作 Player 1；Heuristic AI 會自動完成自己的 Mulligan、主回合、效果目標與 Response Priority。對局結束後可填寫 1～5 分好玩度問卷，結果保存在 `playtest_data/human_feedback/fun_ratings.csv`；其中 U011 手感、回報與暫時【庇護】三題只在玩家本局實際抽到／打出／觸發翻面時才會出現，未接觸時不列入評分，避免產生無判讀價值的預設分數。
 
 ## 測試
 
